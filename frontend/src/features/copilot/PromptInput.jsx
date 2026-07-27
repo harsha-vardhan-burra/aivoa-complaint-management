@@ -1,20 +1,36 @@
 
 import { useDispatch, useSelector } from 'react-redux';
 import { addMessage, setLoading, setError, setDraftText } from './copilotSlice';
-import { setComplaint, setRiskAssessment, setMissingFields } from '../complaint/complaintSlice';
+import {
+  setComplaint,
+  setRiskAssessment,
+  setMissingFields,
+  setLastChangedFields,
+} from '../complaint/complaintSlice';
 import { processComplaintMessage } from '../../services/api';
 import { SendIcon } from '../../components/icons';
 
-// Compose-box text lives in Redux (copilotSlice.draftText) rather than
-// local useState so it can be set from outside this component -- e.g.
-// CopilotPanel's "Try an example" chip -- without duplicating the send
-// pipeline below. Everything from handleSend down is unchanged from the
-// prior local-state version: same API call, same dispatches, same error
-// handling.
+const FIELD_LABELS = {
+  complaint_source: 'Complaint Source',
+  customer_name: 'Customer Name',
+  product_name: 'Product Name',
+  product_strength_grade: 'Product Strength/Grade',
+  batch_number: 'Batch/Lot Number',
+  manufacturing_date: 'Manufacturing Date',
+  expiry_date: 'Expiry Date',
+  quantity_affected: 'Quantity Affected',
+  complaint_type: 'Complaint Type',
+  complaint_date: 'Complaint Date',
+  detailed_complaint_description: 'Detailed Description',
+  initial_severity: 'Initial Severity',
+  priority: 'Priority',
+};
+
 const PromptInput = () => {
   const dispatch = useDispatch();
   const text = useSelector((state) => state.copilot.draftText);
   const currentComplaint = useSelector((state) => state.complaint.complaint);
+  const currentRisk = useSelector((state) => state.complaint.riskAssessment);
   const loading = useSelector((state) => state.copilot.loading);
 
   const handleSend = async () => {
@@ -26,22 +42,61 @@ const PromptInput = () => {
     dispatch(setLoading(true));
     dispatch(setError(null));
 
+    const isExistingComplaint = Object.values(currentComplaint || {}).some(
+      (val) => val !== null && val !== '' && val !== undefined
+    );
+
     try {
-      const result = await processComplaintMessage(trimmed, currentComplaint);
+      const result = await processComplaintMessage(
+        trimmed,
+        currentComplaint,
+        currentRisk
+      );
+
       dispatch(setComplaint(result.complaint));
-      dispatch(setRiskAssessment(result.risk));
+      if (result.risk) {
+        dispatch(setRiskAssessment(result.risk));
+      }
       dispatch(setMissingFields(result.missing_fields));
 
-      const summary = result.missing_fields.length > 0
-        ? `I've updated the complaint record. Still missing: ${result.missing_fields.join(', ')}.`
-        : "I've updated the complaint record. All key fields are now captured.";
-      dispatch(addMessage({ id: Date.now() + 1, role: 'assistant', content: summary }));
+      const changedFields = result.changed_fields || [];
+      dispatch(setLastChangedFields(changedFields));
+
+      let summary = '';
+      if (changedFields.length === 0) {
+        if (isExistingComplaint) {
+          summary = 'No new complaint facts detected. The complaint record remains unchanged.';
+        } else {
+          summary = 'No complaint details could be extracted from that message. Please describe the complaint facts or upload a document.';
+        }
+      } else {
+        const header = isExistingComplaint
+          ? 'Updated complaint details:'
+          : 'Extracted complaint details:';
+        const bullets = changedFields
+          .map(
+            (f) => `• ${FIELD_LABELS[f] || f}: ${result.complaint[f] ?? 'Not provided'}`
+          )
+          .join('\n');
+        const missingPart =
+          result.missing_fields.length > 0
+            ? `\n\nStill missing: ${result.missing_fields.map((f) => FIELD_LABELS[f] || f).join(', ')}.`
+            : '\n\nAll key complaint fields are now captured.';
+
+        summary = `${header}\n${bullets}${missingPart}`;
+      }
+
+      dispatch(
+        addMessage({ id: Date.now() + 1, role: 'assistant', content: summary })
+      );
     } catch (err) {
-      // AI/network failure: report it and leave the existing complaint
-      // state untouched rather than clearing or guessing at fields.
-      const message = err?.response?.data?.detail || 'Something went wrong processing that message. Please try again.';
+      const message =
+        err?.response?.data?.detail ||
+        'Something went wrong processing that message. Please try again.';
       dispatch(setError(message));
-      dispatch(addMessage({ id: Date.now() + 1, role: 'assistant', content: message }));
+      dispatch(
+        addMessage({ id: Date.now() + 1, role: 'assistant', content: message })
+      );
     } finally {
       dispatch(setLoading(false));
     }
@@ -64,7 +119,12 @@ const PromptInput = () => {
         onKeyDown={handleKeyDown}
         disabled={loading}
       />
-      <button type="button" onClick={handleSend} disabled={!text.trim() || loading} aria-label="Send message">
+      <button
+        type="button"
+        onClick={handleSend}
+        disabled={!text.trim() || loading}
+        aria-label="Send message"
+      >
         <SendIcon className="send-icon" />
       </button>
     </div>
@@ -72,3 +132,4 @@ const PromptInput = () => {
 };
 
 export default PromptInput;
+

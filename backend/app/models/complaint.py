@@ -1,8 +1,7 @@
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Column, String, Date, Numeric, DateTime, Text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, Date, Numeric, DateTime, Text, Uuid
 from sqlalchemy.orm import relationship
 
 from app.db.database import Base
@@ -18,7 +17,7 @@ class Complaint(Base):
 
     __tablename__ = "complaints"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     complaint_source = Column(String, nullable=True)
     customer_name = Column(String, nullable=True)
@@ -47,3 +46,4 @@ class Complaint(Base):
         back_populates="complaint",
         cascade="all, delete-orphan",
     )
+

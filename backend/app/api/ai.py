@@ -20,7 +20,9 @@ async def process_complaint_message(payload: ProcessComplaintRequest):
     since we never send back a response that erases it.
     """
     result = run_complaint_agent(
-        message=payload.message, current_complaint=payload.current_complaint
+        message=payload.message,
+        current_complaint=payload.current_complaint,
+        current_risk=payload.current_risk,
     )
 
     if result.get("error"):
@@ -33,4 +35,6 @@ async def process_complaint_message(payload: ProcessComplaintRequest):
         complaint=result["merged_complaint"],
         risk=result.get("risk"),
         missing_fields=result.get("missing_fields", []),
+        changed_fields=result.get("changed_fields", []),
     )
+

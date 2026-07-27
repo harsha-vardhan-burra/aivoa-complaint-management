@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.health import router as health_router
 from app.api.ai import router as ai_router
+from app.api.complaints import router as complaints_router
 
 app = FastAPI(title="AIVOA Complaint Management API")
 
@@ -16,3 +17,5 @@ app.add_middleware(
 
 app.include_router(health_router, prefix="/api")
 app.include_router(ai_router, prefix="/api")
+app.include_router(complaints_router, prefix="/api")
+

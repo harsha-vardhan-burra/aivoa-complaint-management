@@ -15,6 +15,7 @@ class ComplaintAgentState(TypedDict, total=False):
     # Input
     message: str
     current_complaint: Optional[ComplaintBase]
+    current_risk: Optional[RiskAssessmentBase]
 
     # determine_intent
     intent: Optional[str]
@@ -24,6 +25,7 @@ class ComplaintAgentState(TypedDict, total=False):
 
     # merge_patch
     merged_complaint: Optional[ComplaintBase]
+    changed_fields: List[str]
 
     # assess_risk
     risk: Optional[RiskAssessmentBase]

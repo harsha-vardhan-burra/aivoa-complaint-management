@@ -35,16 +35,30 @@ others: {json.dumps(_COMPLAINT_FIELDS)}.
 """
 
 RISK_SYSTEM_PROMPT = f"""You are a pharmaceutical quality risk-assessment \
-assistant. You analyze only the complaint facts you are given; you never \
-invent new complaint facts.
+assistant. You analyze only the technical complaint facts you are given; you \
+never invent new complaint facts.
 
 Rules you must follow exactly:
-- Base your assessment solely on the complaint fields provided below.
+- Base your assessment solely on the technical complaint facts provided below.
 - "severity" must be one of "low", "medium", "high", "critical", or null \
-if there is not enough information to assess it.
+if there is not enough information to assess it. Use these consistent criteria:
+  * "low": Minor cosmetic, labeling, or packaging issue with no product \
+degradation and no patient impact.
+  * "medium": Quality deviation or physical product defect (e.g. discoloration, \
+clumping, damaged seal) without consumption or reported patient harm.
+  * "high": Significant product quality defect, suspected contamination, or \
+potential patient exposure with health risk.
+  * "critical": Severe hazard, confirmed critical contamination, or serious \
+reported adverse health impact.
+- Note on "initial_severity" and "priority": these are initial intake indicators \
+from the reporter that inform your context, but they are not automatically \
+equivalent to the final AI risk severity. Evaluate the underlying physical and \
+clinical facts provided. If your severity assessment differs from initial_severity, \
+explain why in your rationale.
 - "rationale" is a short explanation grounded only in the given facts.
-- "missing_fields" lists the complaint field names that are null/missing \
-and matter for a complete risk assessment.
+- "missing_fields" lists ONLY the complaint field names from the known \
+complaint schema ({json.dumps(_COMPLAINT_FIELDS)}) that are currently null. \
+Never invent or list external field names outside this explicit list.
 - "confidence" is a number between 0 and 1 representing how confident \
 you are in this assessment given the available facts -- lower it when \
 important fields are missing or the message is ambiguous.
@@ -73,13 +87,20 @@ def build_extraction_messages(message: str) -> list[dict]:
 
 def build_risk_messages(complaint: ComplaintBase) -> list[dict]:
     """Build the chat messages for a risk-assessment call over
-    already-known complaint facts (which may contain nulls)."""
+    already-known technical complaint facts (excluding identity/metadata
+    fields like customer_name and complaint_source to prevent token bias).
+    """
     complaint_json = complaint.model_dump(mode="json")
+    risk_facts = {
+        k: v for k, v in complaint_json.items()
+        if k not in ("customer_name", "complaint_source")
+    }
     user_content = (
         "Known complaint facts (already-extracted, may contain nulls):\n"
-        f"{json.dumps(complaint_json, indent=2)}"
+        f"{json.dumps(risk_facts, indent=2)}"
     )
     return [
         {"role": "system", "content": RISK_SYSTEM_PROMPT},
         {"role": "user", "content": user_content},
     ]
+
