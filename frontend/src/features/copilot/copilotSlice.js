@@ -34,7 +34,8 @@ const copilotSlice = createSlice({
     setError: (state, action) => { state.error = action.payload; },
     setUploadedDocument: (state, action) => { state.uploadedDocument = action.payload; },
     clearUploadedDocument: (state) => { state.uploadedDocument = null; },
-    setDraftText: (state, action) => { state.draftText = action.payload; }
+    setDraftText: (state, action) => { state.draftText = action.payload; },
+    resetCopilot: () => initialState,
   }
 });
 
@@ -44,6 +45,7 @@ export const {
   setError,
   setUploadedDocument,
   clearUploadedDocument,
-  setDraftText
+  setDraftText,
+  resetCopilot
 } = copilotSlice.actions;
 export default copilotSlice.reducer;

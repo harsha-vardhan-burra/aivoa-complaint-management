@@ -42,6 +42,18 @@
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }
 
+/* Phase 7: Temporary highlight pulse for fields updated by conversational edits */
+.field-highlight-pulse input,
+.field-highlight-pulse textarea,
+.field-highlight-pulse select,
+.field-highlight-pulse .quantity-field,
+.field-highlight-pulse .date-field {
+  border-color: var(--brand) !important;
+  box-shadow: 0 0 0 3px rgba(15, 110, 94, 0.25) !important;
+  background-color: var(--brand-tint) !important;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease, background-color 0.4s ease;
+}
+
 * {
   box-sizing: border-box;
 }

@@ -17,10 +17,11 @@ export const getHealth = async () => {
 // performs the non-destructive merge and returns the full merged
 // complaint plus a fresh risk assessment -- the frontend does not merge
 // patches itself.
-export const processComplaintMessage = async (message, currentComplaint) => {
+export const processComplaintMessage = async (message, currentComplaint, currentRisk) => {
   const response = await apiClient.post('/api/ai/complaints/process', {
     message,
     current_complaint: currentComplaint,
+    current_risk: currentRisk,
   })
   return response.data
 }

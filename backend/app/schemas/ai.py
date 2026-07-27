@@ -7,26 +7,29 @@ from app.schemas.risk_assessment import RiskAssessmentBase
 
 
 class ProcessComplaintRequest(BaseModel):
-    """Request body for POST /api/ai/complaints/process (Phase 5/6).
+    """Request body for POST /api/ai/complaints/process (Phase 5/6/7).
 
     current_complaint carries what the frontend already knows so the
     backend can merge a patch into it rather than re-extracting a
-    brand-new complaint on every message (non-destructive editing,
-    PROJECT_CONTEXT.md section 14).
+    brand-new complaint on every message (non-destructive editing).
+    current_risk carries the existing risk assessment so no-op messages
+    can preserve risk state without re-querying Groq.
     """
 
     message: str
     current_complaint: Optional[ComplaintBase] = None
+    current_risk: Optional[RiskAssessmentBase] = None
 
 
 class ProcessComplaintResponse(BaseModel):
     """Response body for POST /api/ai/complaints/process.
 
-    complaint, risk, and missing_fields are kept as separate top-level
-    fields -- extraction, risk assessment, and missing information are
-    distinct concepts that must not be conflated (section 7.2/7.3).
+    complaint, risk, missing_fields, and changed_fields are returned
+    as top-level fields for frontend synchronization and UI feedback.
     """
 
     complaint: ComplaintBase
     risk: Optional[RiskAssessmentBase] = None
     missing_fields: List[str] = []
+    changed_fields: List[str] = []
+

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import TriageStatus from './TriageStatus';
 import { resetComplaint } from './complaintSlice';
+import { resetCopilot } from '../copilot/copilotSlice';
 import { CalendarIcon, ResetIcon } from '../../components/icons';
 import { saveComplaint } from '../../services/api';
 
@@ -12,11 +13,25 @@ import { saveComplaint } from '../../services/api';
 const ComplaintForm = () => {
   const complaint = useSelector((state) => state.complaint.complaint);
   const riskAssessment = useSelector((state) => state.complaint.riskAssessment);
+  const lastChangedFields = useSelector((state) => state.complaint.lastChangedFields);
   const dispatch = useDispatch();
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(null);
   const [saveError, setSaveError] = useState(null);
+  const [highlightedFields, setHighlightedFields] = useState([]);
+
+  useEffect(() => {
+    if (lastChangedFields && lastChangedFields.length > 0) {
+      setHighlightedFields(lastChangedFields);
+      const timer = setTimeout(() => {
+        setHighlightedFields([]);
+      }, 2500);
+      return () => clearTimeout(timer);
+    } else {
+      setHighlightedFields([]);
+    }
+  }, [lastChangedFields]);
 
   const hasMeaningfulField = Object.values(complaint || {}).some(
     (val) => val !== null && val !== '' && val !== undefined
@@ -46,8 +61,15 @@ const ComplaintForm = () => {
 
   const handleReset = () => {
     dispatch(resetComplaint());
+    dispatch(resetCopilot());
     setSaveSuccess(null);
     setSaveError(null);
+    setHighlightedFields([]);
+  };
+
+  const getGroupClass = (fieldName, extraClass = '') => {
+    const isHighlighted = highlightedFields.includes(fieldName);
+    return `form-group ${extraClass} ${isHighlighted ? 'field-highlight-pulse' : ''}`.trim();
   };
 
   return (
@@ -93,7 +115,7 @@ const ComplaintForm = () => {
         <div className="form-section">
           <h2 className="section-header"><span className="clause-tag">01</span>Origin &amp; Customer Details</h2>
           <div className="form-grid">
-            <div className="form-group">
+            <div className={getGroupClass('complaint_source')}>
               <label>Complaint Source</label>
               <input
                 type="text"
@@ -102,7 +124,7 @@ const ComplaintForm = () => {
                 readOnly
               />
             </div>
-            <div className="form-group">
+            <div className={getGroupClass('customer_name')}>
               <label>Customer Name</label>
               <input
                 type="text"
@@ -118,7 +140,7 @@ const ComplaintForm = () => {
         <div className="form-section">
           <h2 className="section-header"><span className="clause-tag">02</span>Product &amp; Batch Identification</h2>
           <div className="form-grid">
-            <div className="form-group">
+            <div className={getGroupClass('product_name')}>
               <label>Product Name</label>
               <input
                 type="text"
@@ -127,7 +149,7 @@ const ComplaintForm = () => {
                 readOnly
               />
             </div>
-            <div className="form-group">
+            <div className={getGroupClass('product_strength_grade')}>
               <label>Product Strength/Grade</label>
               <input
                 type="text"
@@ -136,7 +158,7 @@ const ComplaintForm = () => {
                 readOnly
               />
             </div>
-            <div className="form-group">
+            <div className={getGroupClass('batch_number')}>
               <label>Batch/Lot Number</label>
               <input
                 type="text"
@@ -146,7 +168,7 @@ const ComplaintForm = () => {
                 readOnly
               />
             </div>
-            <div className="form-group">
+            <div className={getGroupClass('manufacturing_date')}>
               <label>Manufacturing Date</label>
               <div className="date-field">
                 <input
@@ -158,7 +180,7 @@ const ComplaintForm = () => {
                 <CalendarIcon className="date-field-icon" />
               </div>
             </div>
-            <div className="form-group">
+            <div className={getGroupClass('expiry_date')}>
               <label>Expiry Date</label>
               <div className="date-field">
                 <input
@@ -170,7 +192,7 @@ const ComplaintForm = () => {
                 <CalendarIcon className="date-field-icon" />
               </div>
             </div>
-            <div className="form-group">
+            <div className={getGroupClass('quantity_affected')}>
               <label>Quantity Affected</label>
               <div className="quantity-field">
                 <input
@@ -197,7 +219,7 @@ const ComplaintForm = () => {
         <div className="form-section">
           <h2 className="section-header"><span className="clause-tag">03</span>Complaint Details</h2>
           <div className="form-grid">
-            <div className="form-group">
+            <div className={getGroupClass('complaint_type')}>
               <label>Complaint Type</label>
               <input
                 type="text"
@@ -206,7 +228,7 @@ const ComplaintForm = () => {
                 readOnly
               />
             </div>
-            <div className="form-group">
+            <div className={getGroupClass('complaint_date')}>
               <label>Complaint Date</label>
               <div className="date-field">
                 <input
@@ -218,7 +240,7 @@ const ComplaintForm = () => {
                 <CalendarIcon className="date-field-icon" />
               </div>
             </div>
-            <div className="form-group full-width">
+            <div className={getGroupClass('detailed_complaint_description', 'full-width')}>
               <label>Detailed Complaint Description</label>
               <textarea
                 rows="3"
@@ -234,7 +256,7 @@ const ComplaintForm = () => {
         <div className="form-section">
           <h2 className="section-header"><span className="clause-tag">04</span>Initial Assessment &amp; Priority</h2>
           <div className="form-grid">
-            <div className="form-group">
+            <div className={getGroupClass('initial_severity')}>
               <label>Initial Severity</label>
               <select className="select-field" disabled value={complaint.initial_severity || ''}>
                 <option value="">Awaiting AI extraction...</option>
@@ -243,7 +265,7 @@ const ComplaintForm = () => {
                 <option value="Minor">Minor</option>
               </select>
             </div>
-            <div className="form-group">
+            <div className={getGroupClass('priority')}>
               <label>Priority</label>
               <select className="select-field" disabled value={complaint.priority || ''}>
                 <option value="">Awaiting AI extraction...</option>
@@ -280,3 +302,4 @@ const ComplaintForm = () => {
 };
 
 export default ComplaintForm;
+

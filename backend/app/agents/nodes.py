@@ -50,25 +50,37 @@ def merge_patch(state: ComplaintAgentState) -> dict:
     in the patch means "not mentioned in this message", not "clear
     this field" -- so nulls in the patch never overwrite an existing
     value.
+
+    changed_fields contains ONLY field names whose final value actually
+    differs from current_complaint (e.g. newly populated or updated).
     """
     current = state.get("current_complaint") or ComplaintBase()
     patch = state.get("extracted_patch")
 
     if patch is None:
-        # Extraction failed or produced nothing -- preserve current
-        # complaint state untouched rather than guessing.
-        return {"merged_complaint": current}
+        return {
+            "merged_complaint": current,
+            "changed_fields": [],
+        }
 
     current_dict = current.model_dump()
     patch_dict = patch.model_dump()
 
     merged_dict = dict(current_dict)
+    changed_fields = []
+
     for field_name, patch_value in patch_dict.items():
         if patch_value is not None:
-            merged_dict[field_name] = patch_value
+            old_value = current_dict.get(field_name)
+            if patch_value != old_value:
+                merged_dict[field_name] = patch_value
+                changed_fields.append(field_name)
 
     merged = ComplaintBase.model_validate(merged_dict)
-    return {"merged_complaint": merged}
+    return {
+        "merged_complaint": merged,
+        "changed_fields": changed_fields,
+    }
 
 
 def get_deterministic_missing_fields(complaint: ComplaintBase) -> list[str]:
@@ -94,12 +106,26 @@ def assess_risk(state: ComplaintAgentState) -> dict:
     and recommended_action), while missing_fields is deterministically
     computed from ComplaintBase state so the AI cannot hallucinate
     external fields or misreport completeness.
+
+    If intent is 'update' and changed_fields is empty (no-op input),
+    Groq risk assessment is skipped to save an extra LLM call while
+    preserving existing risk state.
     """
     merged = state.get("merged_complaint") or ComplaintBase()
     deterministic_missing = get_deterministic_missing_fields(merged)
+    changed_fields = state.get("changed_fields", [])
+    intent = state.get("intent")
 
     if state.get("error"):
         return {"risk": None, "missing_fields": deterministic_missing}
+
+    # No-op optimization: if updating an existing complaint and no fields changed,
+    # preserve existing risk state without making a new Groq API call.
+    if intent == "update" and len(changed_fields) == 0:
+        return {
+            "risk": state.get("current_risk"),
+            "missing_fields": deterministic_missing,
+        }
 
     try:
         risk = _groq_service.assess_risk(merged)
@@ -111,4 +137,5 @@ def assess_risk(state: ComplaintAgentState) -> dict:
             "risk": None,
             "missing_fields": deterministic_missing,
         }
+
 

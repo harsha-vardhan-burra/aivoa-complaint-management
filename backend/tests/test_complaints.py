@@ -348,8 +348,124 @@ class TestComplaintPersistence(unittest.TestCase):
         self.assertIn("product_name", user_content)
         self.assertIn("Ibuprofen 400mg", user_content)
 
+    # ------------------------------------------------------------------
+    # PHASE 7 TESTS: CONVERSATIONAL EDITING & CHANGED-FIELD TRACKING
+    # ------------------------------------------------------------------
+
+    def test_phase7_single_field_update_changed_fields(self):
+        """Phase 7 Test A: Single-field update (quantity 48 -> 52) records only quantity_affected in changed_fields."""
+        from app.agents.nodes import merge_patch
+
+        current = ComplaintBase(
+            product_name="Amoxicillin Capsules",
+            batch_number="BMX24602",
+            quantity_affected=Decimal("48"),
+        )
+        patch = ComplaintBase(quantity_affected=Decimal("52"))
+
+        state = {"current_complaint": current, "extracted_patch": patch}
+        result = merge_patch(state)
+
+        merged = result["merged_complaint"]
+        changed = result["changed_fields"]
+
+        self.assertEqual(changed, ["quantity_affected"])
+        self.assertEqual(merged.quantity_affected, Decimal("52"))
+        self.assertEqual(merged.product_name, "Amoxicillin Capsules")
+        self.assertEqual(merged.batch_number, "BMX24602")
+
+    def test_phase7_multi_field_update_changed_fields(self):
+        """Phase 7 Test B: Multi-field update records all modified fields in changed_fields and preserves unrelated fields."""
+        from app.agents.nodes import merge_patch
+
+        current = ComplaintBase(product_name="Amoxicillin Capsules")
+        patch = ComplaintBase(
+            batch_number="BMX24602",
+            quantity_affected=Decimal("48"),
+        )
+
+        state = {"current_complaint": current, "extracted_patch": patch}
+        result = merge_patch(state)
+
+        merged = result["merged_complaint"]
+        changed = result["changed_fields"]
+
+        self.assertIn("batch_number", changed)
+        self.assertIn("quantity_affected", changed)
+        self.assertEqual(len(changed), 2)
+        self.assertEqual(merged.product_name, "Amoxicillin Capsules")
+        self.assertEqual(merged.batch_number, "BMX24602")
+        self.assertEqual(merged.quantity_affected, Decimal("48"))
+
+    def test_phase7_same_value_update_not_in_changed_fields(self):
+        """Phase 7 Test C: Extracting a value identical to existing complaint fact produces empty changed_fields."""
+        from app.agents.nodes import merge_patch
+
+        current = ComplaintBase(
+            product_name="Amoxicillin Capsules",
+            quantity_affected=Decimal("48"),
+        )
+        patch = ComplaintBase(quantity_affected=Decimal("48"))
+
+        state = {"current_complaint": current, "extracted_patch": patch}
+        result = merge_patch(state)
+
+        changed = result["changed_fields"]
+        self.assertEqual(changed, [])
+
+    def test_phase7_no_op_update_preserves_risk_and_skips_groq(self):
+        """Phase 7 Test D: No-op input during update skips Groq risk call and preserves existing risk state."""
+        from app.agents.nodes import assess_risk
+        from app.schemas.risk_assessment import RiskAssessmentBase
+        from unittest.mock import patch
+
+        current = ComplaintBase(product_name="Amoxicillin 500mg")
+        existing_risk = RiskAssessmentBase(
+            severity="medium",
+            rationale="Discoloration observed",
+            missing_fields=["batch_number"],
+            confidence=0.85,
+            recommended_action="Route to QA",
+        )
+
+        state = {
+            "intent": "update",
+            "merged_complaint": current,
+            "changed_fields": [],
+            "current_risk": existing_risk,
+        }
+
+        with patch("app.agents.nodes._groq_service.assess_risk") as mock_assess:
+            result = assess_risk(state)
+            mock_assess.assert_not_called()
+
+        self.assertEqual(result["risk"], existing_risk)
+        self.assertIn("batch_number", result["missing_fields"])
+
+    def test_phase7_non_destructive_correction_preservation(self):
+        """Phase 7 Test E: Correcting an existing field preserves all other previously extracted complaint facts."""
+        from app.agents.nodes import merge_patch
+
+        current = ComplaintBase(
+            complaint_source="Apollo Pharmacy",
+            product_name="Amoxicillin Capsules 500mg",
+            batch_number="BMX24602",
+            quantity_affected=Decimal("48"),
+        )
+        patch = ComplaintBase(quantity_affected=Decimal("52"))
+
+        state = {"current_complaint": current, "extracted_patch": patch}
+        result = merge_patch(state)
+
+        merged = result["merged_complaint"]
+        self.assertEqual(merged.complaint_source, "Apollo Pharmacy")
+        self.assertEqual(merged.product_name, "Amoxicillin Capsules 500mg")
+        self.assertEqual(merged.batch_number, "BMX24602")
+        self.assertEqual(merged.quantity_affected, Decimal("52"))
+
 
 if __name__ == "__main__":
     unittest.main()
+
 
 

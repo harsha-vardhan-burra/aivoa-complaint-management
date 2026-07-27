@@ -41,6 +41,7 @@ const initialState = {
     recommended_action: null,
   },
   missingFields: [],
+  lastChangedFields: [],
 };
 
 const complaintSlice = createSlice({
@@ -57,12 +58,13 @@ const complaintSlice = createSlice({
     setRiskAssessment: (state, action) => {
       state.riskAssessment = action.payload;
     },
-    // missing_fields comes from the AI's own risk assessment
-    // (PROJECT_CONTEXT.md Data Integrity Rule 6: missing information
-    // must be explicit) rather than a client-side heuristic.
+    // missing_fields comes from deterministic calculation
     setMissingFields: (state, action) => {
       state.missingFields = action.payload;
       state.triageStatus = action.payload.length === 0 ? "Ready to Commit" : "Pending Triage";
+    },
+    setLastChangedFields: (state, action) => {
+      state.lastChangedFields = action.payload || [];
     },
     // Returns the (now genuinely empty) initialState -- no demo data is
     // restored.
@@ -70,5 +72,5 @@ const complaintSlice = createSlice({
   }
 });
 
-export const { setComplaint, setRiskAssessment, setMissingFields, resetComplaint } = complaintSlice.actions;
+export const { setComplaint, setRiskAssessment, setMissingFields, setLastChangedFields, resetComplaint } = complaintSlice.actions;
 export default complaintSlice.reducer;

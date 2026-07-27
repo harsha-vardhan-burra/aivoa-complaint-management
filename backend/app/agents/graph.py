@@ -5,6 +5,7 @@ from langgraph.graph import END, StateGraph
 from app.agents.nodes import assess_risk, determine_intent, extract_fields, merge_patch
 from app.agents.state import ComplaintAgentState
 from app.schemas.complaint import ComplaintBase
+from app.schemas.risk_assessment import RiskAssessmentBase
 
 # No HTTP-specific logic lives in the nodes themselves -- the graph
 # exposes a plain function that the FastAPI service layer can call
@@ -27,7 +28,9 @@ complaint_graph = _builder.compile()
 
 
 def run_complaint_agent(
-    message: str, current_complaint: Optional[ComplaintBase] = None
+    message: str,
+    current_complaint: Optional[ComplaintBase] = None,
+    current_risk: Optional[RiskAssessmentBase] = None,
 ) -> ComplaintAgentState:
     """Single entry point for the FastAPI service layer.
 
@@ -39,5 +42,7 @@ def run_complaint_agent(
     initial_state: ComplaintAgentState = {
         "message": message,
         "current_complaint": current_complaint,
+        "current_risk": current_risk,
     }
     return complaint_graph.invoke(initial_state)
+
