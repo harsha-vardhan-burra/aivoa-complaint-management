@@ -36,3 +36,25 @@ export const saveComplaint = async (complaint, riskAssessment) => {
   return response.data
 }
 
+// Phase 8: uploads a complaint document (.pdf, .txt, .eml) along with optional
+// existing complaint/risk state for non-destructive document extraction.
+export const processComplaintDocument = async (file, currentComplaint, currentRisk) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  if (currentComplaint) {
+    formData.append('current_complaint_json', JSON.stringify(currentComplaint))
+  }
+  if (currentRisk) {
+    formData.append('current_risk_json', JSON.stringify(currentRisk))
+  }
+
+  const response = await apiClient.post('/api/ai/complaints/document', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+  return response.data
+}
+
+
+

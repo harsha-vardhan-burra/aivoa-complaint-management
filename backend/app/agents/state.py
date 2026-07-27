@@ -14,6 +14,7 @@ class ComplaintAgentState(TypedDict, total=False):
 
     # Input
     message: str
+    is_document: Optional[bool]
     current_complaint: Optional[ComplaintBase]
     current_risk: Optional[RiskAssessmentBase]
 

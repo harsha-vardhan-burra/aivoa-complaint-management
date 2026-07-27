@@ -6,7 +6,11 @@ from groq import Groq
 from app.core.config import settings
 from app.schemas.complaint import ComplaintBase
 from app.schemas.risk_assessment import RiskAssessmentBase
-from app.services.prompts import build_extraction_messages, build_risk_messages
+from app.services.prompts import (
+    build_document_extraction_messages,
+    build_extraction_messages,
+    build_risk_messages,
+)
 from app.services.schema_utils import COMPLAINT_EXTRACTION_SCHEMA, RISK_ASSESSMENT_SCHEMA
 
 
@@ -40,7 +44,6 @@ class GroqService:
     - Merging an extracted patch into an existing complaint
       (LangGraph's merge_patch node, Phase 5).
     - Persisting anything (Phase 3 models + later API layer).
-    - PDF text extraction (Phase 8).
     """
 
     def __init__(self, client: Optional[Groq] = None, model: Optional[str] = None):
@@ -81,6 +84,20 @@ class GroqService:
                 f"Extraction output failed schema validation: {exc}"
             ) from exc
 
+    def extract_document_fields(self, document_text: str) -> ComplaintBase:
+        """Extract complaint fields from raw text extracted from an uploaded document.
+        Uses prompt hardening to treat document content strictly as source data."""
+        raw = self._chat_json(
+            build_document_extraction_messages(document_text), COMPLAINT_EXTRACTION_SCHEMA
+        )
+
+        try:
+            return ComplaintBase.model_validate(raw)
+        except Exception as exc:
+            raise GroqValidationError(
+                f"Document extraction output failed schema validation: {exc}"
+            ) from exc
+
     def assess_risk(self, complaint: ComplaintBase) -> RiskAssessmentBase:
         """Produce a risk assessment from already-known complaint facts.
         This is decision support and must stay distinguishable from
@@ -96,3 +113,4 @@ class GroqService:
             raise GroqValidationError(
                 f"Risk assessment output failed schema validation: {exc}"
             ) from exc
+
