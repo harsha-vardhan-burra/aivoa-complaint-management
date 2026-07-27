@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import TriageStatus from './TriageStatus';
 import { resetComplaint } from './complaintSlice';
 import { CalendarIcon, ResetIcon } from '../../components/icons';
+import { saveComplaint } from '../../services/api';
 
 // The complaint form is a read-only projection of AI-extracted state.
 // It is intentionally not an independent manual-entry mechanism: every
@@ -9,7 +11,44 @@ import { CalendarIcon, ResetIcon } from '../../components/icons';
 // directly by the user.
 const ComplaintForm = () => {
   const complaint = useSelector((state) => state.complaint.complaint);
+  const riskAssessment = useSelector((state) => state.complaint.riskAssessment);
   const dispatch = useDispatch();
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(null);
+  const [saveError, setSaveError] = useState(null);
+
+  const hasMeaningfulField = Object.values(complaint || {}).some(
+    (val) => val !== null && val !== '' && val !== undefined
+  );
+
+  const handleSave = async () => {
+    if (!hasMeaningfulField) {
+      setSaveError('Cannot save an empty complaint. Please provide complaint information via the Copilot.');
+      setSaveSuccess(null);
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveSuccess(null);
+    setSaveError(null);
+
+    try {
+      const res = await saveComplaint(complaint, riskAssessment);
+      setSaveSuccess(`Complaint persisted successfully! (ID: ${res.id})`);
+    } catch (err) {
+      const detail = err.response?.data?.detail || err.message || 'Failed to save complaint.';
+      setSaveError(typeof detail === 'string' ? detail : JSON.stringify(detail));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleReset = () => {
+    dispatch(resetComplaint());
+    setSaveSuccess(null);
+    setSaveError(null);
+  };
 
   return (
     <div className="complaint-card">
@@ -22,6 +61,34 @@ const ComplaintForm = () => {
       </div>
 
       <div className="complaint-form">
+        {saveSuccess && (
+          <div className="alert-banner alert-success" style={{
+            padding: '10px 14px',
+            marginBottom: '16px',
+            borderRadius: '6px',
+            backgroundColor: 'rgba(34, 197, 94, 0.15)',
+            border: '1px solid rgba(34, 197, 94, 0.3)',
+            color: '#4ade80',
+            fontSize: '0.875rem'
+          }}>
+            ✓ {saveSuccess}
+          </div>
+        )}
+
+        {saveError && (
+          <div className="alert-banner alert-error" style={{
+            padding: '10px 14px',
+            marginBottom: '16px',
+            borderRadius: '6px',
+            backgroundColor: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            color: '#f87171',
+            fontSize: '0.875rem'
+          }}>
+            ⚠ {saveError}
+          </div>
+        )}
+
         {/* Section 1: Origin & Customer Details */}
         <div className="form-section">
           <h2 className="section-header"><span className="clause-tag">01</span>Origin &amp; Customer Details</h2>
@@ -193,12 +260,19 @@ const ComplaintForm = () => {
           <button
             type="button"
             className="btn-ghost"
-            onClick={() => dispatch(resetComplaint())}
+            onClick={handleReset}
           >
             <ResetIcon className="btn-icon" />
             Reset Form
           </button>
-          <button type="button" className="btn-primary">Save Complaint</button>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={handleSave}
+            disabled={isSaving || !hasMeaningfulField}
+          >
+            {isSaving ? 'Saving...' : 'Save Complaint'}
+          </button>
         </div>
       </div>
     </div>

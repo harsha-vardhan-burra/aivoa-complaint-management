@@ -17,6 +17,10 @@ app/schemas/complaint.py field_validators) remains the second, final
 safety net in case a model or provider doesn't honor strict mode.
 """
 
+from app.schemas.complaint import ComplaintBase
+
+_COMPLAINT_FIELDS = list(ComplaintBase.model_fields.keys())
+
 COMPLAINT_EXTRACTION_SCHEMA = {
     "name": "complaint_extraction",
     "strict": True,
@@ -106,7 +110,10 @@ RISK_ASSESSMENT_SCHEMA = {
             "rationale": {"type": ["string", "null"]},
             "missing_fields": {
                 "type": "array",
-                "items": {"type": "string"},
+                "items": {
+                    "type": "string",
+                    "enum": _COMPLAINT_FIELDS,
+                },
             },
             "confidence": {
                 "type": ["number", "null"],
@@ -116,3 +123,4 @@ RISK_ASSESSMENT_SCHEMA = {
         },
     },
 }
+

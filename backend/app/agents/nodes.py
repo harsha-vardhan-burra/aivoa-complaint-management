@@ -71,19 +71,44 @@ def merge_patch(state: ComplaintAgentState) -> dict:
     return {"merged_complaint": merged}
 
 
+def get_deterministic_missing_fields(complaint: ComplaintBase) -> list[str]:
+    """Deterministically compute missing fields from ComplaintBase state.
+
+    The application schema (ComplaintBase) is the sole authority for
+    form completeness: any field whose value is strictly None is missing.
+    Valid non-None values (including falsy numbers or Booleans) are not
+    treated as missing.
+    """
+    complaint_dict = complaint.model_dump()
+    return [
+        field_name
+        for field_name, value in complaint_dict.items()
+        if value is None
+    ]
+
+
 def assess_risk(state: ComplaintAgentState) -> dict:
     """Assess risk on the merged (latest known) complaint state.
 
-    Skipped if an earlier node already recorded an error, so a failed
-    request doesn't spend an extra Groq call and so the frontend gets
-    one clear error rather than a partially-completed result."""
-    if state.get("error"):
-        return {"risk": None, "missing_fields": []}
-
+    The LLM provides decision support (severity, rationale, confidence,
+    and recommended_action), while missing_fields is deterministically
+    computed from ComplaintBase state so the AI cannot hallucinate
+    external fields or misreport completeness.
+    """
     merged = state.get("merged_complaint") or ComplaintBase()
+    deterministic_missing = get_deterministic_missing_fields(merged)
+
+    if state.get("error"):
+        return {"risk": None, "missing_fields": deterministic_missing}
 
     try:
         risk = _groq_service.assess_risk(merged)
-        return {"risk": risk, "missing_fields": risk.missing_fields}
+        risk.missing_fields = deterministic_missing
+        return {"risk": risk, "missing_fields": deterministic_missing}
     except (GroqServiceError, GroqValidationError) as exc:
-        return {"error": str(exc), "risk": None, "missing_fields": []}
+        return {
+            "error": str(exc),
+            "risk": None,
+            "missing_fields": deterministic_missing,
+        }
+

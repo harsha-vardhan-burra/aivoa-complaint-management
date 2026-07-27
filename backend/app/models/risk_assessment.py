@@ -1,8 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey, JSON, Float
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey, JSON, Float, Uuid
 from sqlalchemy.orm import relationship
 
 from app.db.database import Base
@@ -18,9 +17,9 @@ class RiskAssessment(Base):
 
     __tablename__ = "risk_assessments"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     complaint_id = Column(
-        UUID(as_uuid=True), ForeignKey("complaints.id"), nullable=False
+        Uuid(as_uuid=True), ForeignKey("complaints.id"), nullable=False
     )
 
     severity = Column(String, nullable=True)

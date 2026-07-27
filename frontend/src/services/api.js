@@ -24,3 +24,14 @@ export const processComplaintMessage = async (message, currentComplaint) => {
   })
   return response.data
 }
+
+// Phase 6.5: persists the current structured complaint state and optional
+// AI risk assessment to PostgreSQL backend via POST /api/complaints.
+export const saveComplaint = async (complaint, riskAssessment) => {
+  const response = await apiClient.post('/api/complaints', {
+    complaint,
+    risk_assessment: riskAssessment,
+  })
+  return response.data
+}
+

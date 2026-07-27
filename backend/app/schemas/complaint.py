@@ -2,7 +2,7 @@ import re
 import uuid
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
-from typing import Optional
+from typing import List, Optional
 
 from dateutil import parser as date_parser
 from pydantic import BaseModel, ConfigDict, field_validator
@@ -86,10 +86,21 @@ class ComplaintBase(BaseModel):
         return value
 
 
+from app.schemas.risk_assessment import RiskAssessmentBase, RiskAssessmentResponse
+
+
 class ComplaintCreate(ComplaintBase):
     """Schema used when persisting a complaint via POST /api/complaints."""
 
     pass
+
+
+class SaveComplaintRequest(BaseModel):
+    """Request payload for POST /api/complaints, containing complaint details
+    and optional AI risk assessment."""
+
+    complaint: ComplaintBase
+    risk_assessment: Optional[RiskAssessmentBase] = None
 
 
 class ComplaintResponse(ComplaintBase):
@@ -100,3 +111,5 @@ class ComplaintResponse(ComplaintBase):
     id: uuid.UUID
     created_at: datetime
     updated_at: datetime
+    risk_assessments: List[RiskAssessmentResponse] = []
+
