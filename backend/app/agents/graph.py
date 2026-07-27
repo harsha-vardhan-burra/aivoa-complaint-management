@@ -31,18 +31,21 @@ def run_complaint_agent(
     message: str,
     current_complaint: Optional[ComplaintBase] = None,
     current_risk: Optional[RiskAssessmentBase] = None,
+    is_document: bool = False,
 ) -> ComplaintAgentState:
     """Single entry point for the FastAPI service layer.
 
     Runs the full determine_intent -> extract_fields -> merge_patch ->
-    assess_risk pipeline for one incoming message and returns the
-    final state. Callers should check state["error"] before trusting
-    state["merged_complaint"] / state["risk"] as a successful result.
+    assess_risk pipeline for one incoming message or extracted document
+    text and returns the final state. Callers should check state["error"]
+    before trusting state["merged_complaint"] / state["risk"].
     """
     initial_state: ComplaintAgentState = {
         "message": message,
+        "is_document": is_document,
         "current_complaint": current_complaint,
         "current_risk": current_risk,
     }
     return complaint_graph.invoke(initial_state)
+
 

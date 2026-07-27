@@ -9,3 +9,6 @@ groq==1.6.0
 langgraph==1.2.9
 python-dateutil==2.9.0.post0
 word2number==1.1
+pypdf==4.3.1
+python-multipart==0.0.12
+

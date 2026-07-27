@@ -77,7 +77,7 @@ const ComplaintForm = () => {
       <div className="card-header">
         <div>
           <h1 className="card-title">Complaint Record</h1>
-          <p className="card-subtitle">API &amp; FPD Quality Assurance Module</p>
+          <p className="card-subtitle">API &amp; FDF Quality Assurance Module</p>
         </div>
         <TriageStatus />
       </div>
