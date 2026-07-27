@@ -1,0 +1,882 @@
+
+:root {
+  /* --- Color: deep pine/teal accent + neutral paper, distinct from a
+     generic navy or indigo SaaS palette. A warm stamp-ink tone carries the
+     regulatory "controlled document" motif on the triage badge. --- */
+  --paper: #F5F7F5;
+  --surface: #FFFFFF;
+  --surface-sunken: #EEF1EF;
+  --ink-900: #17241F;
+  --ink-600: #4B5A54;
+  --ink-400: #7C8A83;
+  --line: #DDE4DF;
+  --line-strong: #C7D0C9;
+
+  --brand: #0F6E5E;
+  --brand-ink: #0B5346;
+  --brand-tint: #E7F1EE;
+
+  --stamp: #9C6B2E;
+  --stamp-tint: #FBF3E7;
+  --stamp-ready: #1B7A4D;
+  --stamp-ready-tint: #E7F5ED;
+
+  --signal-critical: #B3261E;
+  --signal-critical-tint: #FBEAE9;
+  --signal-major: #B5560A;
+  --signal-major-tint: #FDF1E5;
+  --signal-medium: #A6820A;
+  --signal-medium-tint: #FBF6E3;
+  --signal-minor: #1B7A4D;
+  --signal-minor-tint: #E7F5ED;
+
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 2.75rem;
+  --radius: 10px;
+  --radius-sm: 6px;
+
+  --font-ui: 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-ui);
+  background-color: var(--paper);
+  color: var(--ink-900);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* --- Slim wordmark strip: a thin brand rule, not a heavy colored bar --- */
+.app-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.9rem var(--spacing-lg);
+  background-color: var(--paper);
+  border-bottom: 2px solid var(--brand);
+  flex-shrink: 0;
+}
+
+.wordmark {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ink-900);
+}
+
+.wordmark-divider {
+  width: 1px;
+  height: 1rem;
+  background: var(--line-strong);
+}
+
+.wordmark-sub {
+  font-size: 0.85rem;
+  color: var(--ink-600);
+}
+
+.main-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+}
+
+/* --- LEFT PANEL --- */
+.left-panel {
+  flex: 1.2;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.complaint-card,
+.risk-card {
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 2px rgba(23, 36, 31, 0.04), 0 6px 16px rgba(23, 36, 31, 0.05);
+}
+
+.complaint-card {
+  padding: var(--spacing-xl);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--line);
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink-900);
+}
+
+.card-subtitle {
+  margin: 0.3rem 0 0 0;
+  font-size: 0.8rem;
+  color: var(--ink-600);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* --- Triage stamp: rotated dashed "ink stamp" motif drawn from
+   controlled-document paperwork rather than a generic status pill --- */
+.triage-stamp {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  transform: rotate(-2deg);
+}
+
+.triage-stamp-pending {
+  border: 1.5px dashed var(--stamp);
+  color: var(--stamp);
+  background-color: var(--stamp-tint);
+}
+
+.triage-stamp-ready {
+  border: 1.5px solid var(--stamp-ready);
+  color: var(--stamp-ready);
+  background-color: var(--stamp-ready-tint);
+}
+
+/* Form Sections */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-900);
+  margin: var(--spacing-xl) 0 var(--spacing-md) 0;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--line);
+}
+
+.form-section:first-child .section-header { margin-top: 0; }
+
+.clause-tag {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--brand);
+  background-color: var(--brand-tint);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--spacing-lg);
+  row-gap: var(--spacing-lg);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group.full-width { grid-column: 1 / -1; }
+
+.form-group label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--ink-900);
+  margin-bottom: 0.55rem;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-sunken);
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--ink-900);
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--brand);
+  background-color: var(--surface);
+}
+
+/* All complaint fields are AI-controlled: read-only inputs/textareas and
+   disabled selects share one visual treatment so it is always clear the
+   value came from extraction, not manual entry. */
+.form-group input[readonly],
+.form-group textarea[readonly],
+.form-group select:disabled {
+  background-color: var(--surface-sunken);
+  color: var(--ink-900);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+/* A field showing its placeholder (no AI value yet) reads visually
+   distinct from a field holding a real extracted value. */
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  font-style: italic;
+  color: var(--ink-400);
+  opacity: 1;
+}
+
+.mono-field { font-family: var(--font-mono); font-size: 0.85rem; }
+
+.form-group textarea { line-height: 1.6; min-height: 5rem; }
+
+/* Date fields: small calendar glyph anchored inside the field */
+.date-field {
+  position: relative;
+}
+
+.date-field input { padding-right: 2.25rem; }
+
+.date-field-icon {
+  position: absolute;
+  right: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--ink-400);
+  pointer-events: none;
+}
+
+/* Quantity Affected: value + unit read as one merged control */
+.quantity-field {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.quantity-field input {
+  border: none;
+  background: transparent;
+  flex: 1;
+  min-width: 0;
+}
+.quantity-field input:focus { outline: none; background: transparent; }
+
+.quantity-divider {
+  width: 1px;
+  background-color: var(--line-strong);
+  margin: 0.5rem 0;
+}
+
+.quantity-field .unit-select {
+  border: none;
+  background: transparent;
+  width: auto;
+  min-width: 68px;
+  color: var(--ink-600);
+  font-weight: 500;
+}
+
+.select-field {
+  width: 100%;
+}
+
+/* Actions */
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--line);
+}
+
+.btn-icon { width: 15px; height: 15px; }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-600);
+  padding: 0.7rem 1.25rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.btn-ghost:hover { background-color: var(--surface-sunken); border-color: var(--line-strong); }
+
+.btn-primary {
+  background-color: var(--brand);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.6rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.btn-primary:hover { background-color: var(--brand-ink); }
+
+.btn-ghost:focus-visible,
+.btn-primary:focus-visible,
+.btn-paste:focus-visible,
+.upload-zone:focus-visible,
+.document-chip-remove:focus-visible,
+.prompt-input-area button:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* Risk Panel */
+.risk-card {
+  padding: var(--spacing-lg);
+}
+
+.risk-header {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink-900);
+  margin: 0 0 var(--spacing-md) 0;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--line);
+}
+
+/* Signature element: severity presented as a position on the full
+   Minor -> Major -> Critical scale, like a lab-report measurement,
+   rather than an isolated colored pill. */
+.risk-gauge { margin-bottom: var(--spacing-md); }
+
+.risk-gauge-track {
+  display: flex;
+  gap: 4px;
+}
+
+.risk-gauge-segment {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background-color: var(--surface-sunken);
+}
+
+.risk-gauge-segment.filled.risk-minor { background-color: var(--signal-minor); }
+.risk-gauge-segment.filled.risk-medium { background-color: var(--signal-medium); }
+.risk-gauge-segment.filled.risk-major { background-color: var(--signal-major); }
+.risk-gauge-segment.filled.risk-critical { background-color: var(--signal-critical); }
+
+.risk-gauge-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.4rem;
+  font-size: 0.7rem;
+  color: var(--ink-400);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.risk-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  background: var(--surface-sunken);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+}
+
+.risk-confidence {
+  color: var(--ink-600);
+  font-size: 0.85rem;
+  font-family: var(--font-mono);
+}
+.risk-confidence strong { color: var(--ink-900); }
+
+.risk-badge {
+  padding: 0.3rem 0.8rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+.risk-badge.risk-major { background-color: var(--signal-major-tint); color: var(--signal-major); }
+.risk-badge.risk-medium { background-color: var(--signal-medium-tint); color: var(--signal-medium); }
+.risk-badge.risk-critical { background-color: var(--signal-critical-tint); color: var(--signal-critical); }
+.risk-badge.risk-minor { background-color: var(--signal-minor-tint); color: var(--signal-minor); }
+.risk-badge.risk-unassessed { background-color: var(--surface-sunken); color: var(--ink-400); }
+
+.risk-block { margin-bottom: 1rem; }
+.risk-block:last-of-type { margin-bottom: 0; }
+
+.risk-block-title {
+  margin: 0 0 0.4rem 0;
+  color: var(--ink-600);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.risk-block-text {
+  margin: 0;
+  line-height: 1.55;
+  color: var(--ink-900);
+}
+
+.missing-info-box {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm);
+  background-color: var(--stamp-tint);
+  border-radius: var(--radius-sm);
+  border: 1px solid #F0DCB8;
+  color: var(--stamp);
+  font-size: 0.85rem;
+}
+
+/* --- RIGHT PANEL (Copilot) --- */
+.right-panel {
+  flex: 0.8;
+  display: flex;
+  flex-direction: column;
+  min-width: 350px;
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 2px rgba(23, 36, 31, 0.04), 0 6px 16px rgba(23, 36, 31, 0.05);
+  overflow: hidden;
+}
+
+.copilot-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.copilot-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.copilot-mark {
+  width: 20px;
+  height: 20px;
+  color: var(--brand);
+  flex-shrink: 0;
+}
+
+.copilot-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--ink-900);
+  font-weight: 700;
+  flex: 1;
+}
+
+.preview-tag {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-600);
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+}
+
+/* Scrollable Chat Area */
+.chat-history {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.message-bubble {
+  max-width: 85%;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+
+.message-user {
+  align-self: flex-end;
+  background-color: var(--brand);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.message-assistant {
+  align-self: flex-start;
+  background-color: var(--surface);
+  color: var(--ink-900);
+  border: 1px solid var(--line);
+  border-bottom-left-radius: 4px;
+}
+
+/* Fixed Bottom Actions */
+.copilot-actions {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: var(--surface);
+  border-top: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.prompt-input-area {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.prompt-input-area textarea {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  resize: none;
+  font-family: inherit;
+  font-size: 0.9rem;
+  height: 50px;
+  background-color: var(--surface-sunken);
+}
+
+.prompt-input-area textarea:focus {
+  outline: none;
+  border-color: var(--brand);
+  background-color: var(--surface);
+}
+
+.prompt-input-area button {
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--brand);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color 0.2s, opacity 0.2s;
+}
+
+.send-icon { width: 18px; height: 18px; }
+
+.prompt-input-area button:hover:not(:disabled) { background-color: var(--brand-ink); }
+
+.prompt-input-area button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.disclaimer {
+  margin-top: 0.5rem;
+  font-size: 0.7rem;
+  color: var(--ink-400);
+  text-align: center;
+}
+
+/* Upload Area Styles */
+.upload-zone {
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--radius);
+  padding: 2rem;
+  text-align: center;
+  background-color: var(--surface-sunken);
+  margin-bottom: var(--spacing-sm);
+  transition: border-color 0.2s, background-color 0.2s;
+  cursor: pointer;
+}
+.upload-zone:hover { border-color: var(--brand); background-color: var(--brand-tint); }
+
+.upload-icon {
+  width: 30px;
+  height: 30px;
+  margin-bottom: 0.5rem;
+  color: var(--brand);
+}
+
+.upload-title {
+  margin: 0 0 0.3rem 0;
+  font-weight: 500;
+  color: var(--ink-900);
+}
+
+.upload-subtitle {
+  margin: 0;
+  color: var(--ink-600);
+  font-size: 0.9rem;
+}
+
+.upload-link {
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.upload-divider {
+  margin: 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ink-400);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+.upload-divider::before,
+.upload-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line-strong);
+}
+
+/* Secondary action: outlined, not competing visually with Save Complaint */
+.btn-paste {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--surface);
+  color: var(--brand);
+  border: 1px solid var(--brand);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 1.1rem;
+  cursor: pointer;
+  font-weight: 500;
+  font-family: inherit;
+  font-size: 0.88rem;
+}
+.btn-paste:hover { background-color: var(--brand-tint); }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.document-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background-color: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.85rem;
+  margin-bottom: var(--spacing-sm);
+  font-size: 0.85rem;
+}
+
+.document-chip-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-900);
+}
+
+.document-chip-icon {
+  width: 15px;
+  height: 15px;
+  color: var(--brand);
+  flex-shrink: 0;
+}
+
+.document-chip-remove {
+  background: none;
+  border: none;
+  color: var(--ink-600);
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: flex;
+}
+.document-chip-remove:hover { background-color: var(--line); color: var(--ink-900); }
+
+.chip-remove-icon { width: 13px; height: 13px; }
+
+.info-box {
+  background-color: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 0.85rem;
+  font-size: 0.8rem;
+  color: var(--ink-600);
+  margin-bottom: var(--spacing-sm);
+}
+
+.ai-assistant-box {
+  background-color: var(--brand-tint);
+  border: 1px solid #CFE4DE;
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+.ai-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--brand);
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.ai-assistant-text {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--brand-ink);
+  line-height: 1.5;
+}
+
+.example-chip {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background-color: var(--surface-sunken);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.85rem;
+  margin-bottom: var(--spacing-sm);
+  cursor: pointer;
+  font: inherit;
+}
+.example-chip:hover { border-color: var(--brand); background-color: var(--brand-tint); }
+.example-chip:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+.example-chip-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--brand);
+  margin-bottom: 0.25rem;
+}
+
+.example-chip-icon { width: 13px; height: 13px; }
+
+.example-chip-text {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--ink-600);
+  font-style: italic;
+}
+
+/* Subtle, consistent scrollbars for the two independently-scrolling panes */
+.left-panel,
+.chat-history {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+.left-panel::-webkit-scrollbar,
+.chat-history::-webkit-scrollbar {
+  width: 8px;
+}
+.left-panel::-webkit-scrollbar-thumb,
+.chat-history::-webkit-scrollbar-thumb {
+  background-color: var(--line-strong);
+  border-radius: 8px;
+}
+.left-panel::-webkit-scrollbar-track,
+.chat-history::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* --- RESPONSIVE BREAKPOINTS --- */
+@media (max-width: 1024px) {
+  .left-panel { flex: 1; }
+  .right-panel { flex: 1; min-width: 300px; }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+    overflow-y: auto;
+    padding: var(--spacing-sm);
+  }
+
+  /* On a phone, the assistant is how the form gets filled in, so it leads.
+     Visual order only — the DOM order (form, then copilot) stays as-is for
+     source order / screen readers. */
+  .right-panel {
+    order: -1;
+    height: 480px;
+    min-width: 100%;
+  }
+
+  .left-panel {
+    overflow-y: visible;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-wrap: wrap;
+  }
+}

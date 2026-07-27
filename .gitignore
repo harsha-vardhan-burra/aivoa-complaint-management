@@ -1,0 +1,69 @@
+# ============================================
+# Environment variables / secrets
+# ============================================
+.env
+.env.*
+!.env.example
+
+# ============================================
+# Python
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Python tooling / caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# ============================================
+# Node / React / Vite
+# ============================================
+node_modules/
+dist/
+.vite/
+coverage/
+
+# Local environment overrides
+*.local
+
+# ============================================
+# IDE / Editor
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ============================================
+# OS-generated files
+# ============================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================
+# Logs
+# ============================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ============================================
+# Temporary files
+# ============================================
+*.tmp
+*.temp
+~$*
