@@ -34,6 +34,7 @@ class ComplaintBase(BaseModel):
     manufacturing_date: Optional[date] = None
     expiry_date: Optional[date] = None
     quantity_affected: Optional[Decimal] = None
+    quantity_unit: Optional[str] = None
 
     complaint_type: Optional[str] = None
     complaint_date: Optional[date] = None

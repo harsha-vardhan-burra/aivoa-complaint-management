@@ -182,6 +182,26 @@ body {
   background-color: var(--stamp-ready-tint);
 }
 
+/* Save / Status Alerts */
+.alert-banner {
+  padding: 10px 14px;
+  margin-bottom: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+}
+
+.alert-banner.alert-success {
+  background-color: var(--stamp-ready-tint);
+  border: 1px solid rgba(27, 122, 77, 0.3);
+  color: var(--stamp-ready);
+}
+
+.alert-banner.alert-error {
+  background-color: var(--signal-critical-tint);
+  border: 1px solid rgba(179, 38, 30, 0.3);
+  color: var(--signal-critical);
+}
+
 /* Form Sections */
 .section-header {
   display: flex;

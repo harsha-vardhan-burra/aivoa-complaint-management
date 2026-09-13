@@ -36,6 +36,7 @@ COMPLAINT_EXTRACTION_SCHEMA = {
             "manufacturing_date",
             "expiry_date",
             "quantity_affected",
+            "quantity_unit",
             "complaint_type",
             "complaint_date",
             "detailed_complaint_description",
@@ -73,6 +74,14 @@ COMPLAINT_EXTRACTION_SCHEMA = {
                     "rather than a specific number."
                 ),
             },
+            "quantity_unit": {
+                "type": ["string", "null"],
+                "enum": ["Units", "kg", "g", "mg", "ml", "L", None],
+                "description": (
+                    "The unit of measurement for quantity_affected, matching "
+                    "one of the allowed enum values. Null if no unit is specified."
+                ),
+            },
             "complaint_type": {"type": ["string", "null"]},
             "complaint_date": {
                 "type": ["string", "null"],
@@ -83,8 +92,15 @@ COMPLAINT_EXTRACTION_SCHEMA = {
                 ),
             },
             "detailed_complaint_description": {"type": ["string", "null"]},
-            "initial_severity": {"type": ["string", "null"]},
-            "priority": {"type": ["string", "null"]},
+            # Explicit enum matching frontend ComplaintForm.jsx dropdown options exactly
+            "initial_severity": {
+                "type": ["string", "null"],
+                "enum": ["Critical", "Major", "Minor", None],
+            },
+            "priority": {
+                "type": ["string", "null"],
+                "enum": ["High", "Medium", "Low", None],
+            },
         },
     },
 }

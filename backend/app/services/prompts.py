@@ -29,6 +29,11 @@ a complete ISO 8601 date, exactly YYYY-MM-DD: "18 April 2026" -> \
 give enough information to determine a complete date (missing day, \
 month, or year), the value MUST be null rather than a partial or \
 guessed date.
+- "quantity_unit" if present must be one of "Units", "kg", "g", "mg", "ml", "L", or null. \
+When a unit accompanies a quantity (e.g. "50 kg"), extract the numeric value into "quantity_affected" \
+and the unit into "quantity_unit".
+- "initial_severity" if present must be one of "Critical", "Major", "Minor", or null. \
+"priority" if present must be one of "High", "Medium", "Low", or null.
 - Respond with a single JSON object containing EXACTLY these keys, no \
 others: {json.dumps(_COMPLAINT_FIELDS)}.
 - Output JSON only. No markdown, no explanations, no surrounding text.

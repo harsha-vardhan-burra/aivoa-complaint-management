@@ -5,6 +5,7 @@ import { resetComplaint } from './complaintSlice';
 import { resetCopilot } from '../copilot/copilotSlice';
 import { CalendarIcon, ResetIcon } from '../../components/icons';
 import { saveComplaint } from '../../services/api';
+import './ComplaintForm.css';
 
 // The complaint form is a read-only projection of AI-extracted state.
 // It is intentionally not an independent manual-entry mechanism: every
@@ -84,29 +85,13 @@ const ComplaintForm = () => {
 
       <div className="complaint-form">
         {saveSuccess && (
-          <div className="alert-banner alert-success" style={{
-            padding: '10px 14px',
-            marginBottom: '16px',
-            borderRadius: '6px',
-            backgroundColor: 'rgba(34, 197, 94, 0.15)',
-            border: '1px solid rgba(34, 197, 94, 0.3)',
-            color: '#4ade80',
-            fontSize: '0.875rem'
-          }}>
+          <div className="alert-banner alert-success">
             ✓ {saveSuccess}
           </div>
         )}
 
         {saveError && (
-          <div className="alert-banner alert-error" style={{
-            padding: '10px 14px',
-            marginBottom: '16px',
-            borderRadius: '6px',
-            backgroundColor: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            color: '#f87171',
-            fontSize: '0.875rem'
-          }}>
+          <div className="alert-banner alert-error">
             ⚠ {saveError}
           </div>
         )}
@@ -202,13 +187,17 @@ const ComplaintForm = () => {
                   readOnly
                 />
                 <span className="quantity-divider" aria-hidden="true" />
-                <select className="unit-select" disabled defaultValue="Units">
-                  <option>Units</option>
-                  <option>kg</option>
-                  <option>g</option>
-                  <option>mg</option>
-                  <option>ml</option>
-                  <option>L</option>
+                <select
+                  className="unit-select"
+                  disabled
+                  value={complaint.quantity_unit || 'Units'}
+                >
+                  <option value="Units">Units</option>
+                  <option value="kg">kg</option>
+                  <option value="g">g</option>
+                  <option value="mg">mg</option>
+                  <option value="ml">ml</option>
+                  <option value="L">L</option>
                 </select>
               </div>
             </div>

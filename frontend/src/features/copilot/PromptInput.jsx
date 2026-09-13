@@ -9,24 +9,9 @@ import {
 } from '../complaint/complaintSlice';
 import { processComplaintMessage } from '../../services/api';
 import { SendIcon } from '../../components/icons';
+import { FIELD_LABELS } from '../../constants/fieldLabels';
 
-const FIELD_LABELS = {
-  complaint_source: 'Complaint Source',
-  customer_name: 'Customer Name',
-  product_name: 'Product Name',
-  product_strength_grade: 'Product Strength/Grade',
-  batch_number: 'Batch/Lot Number',
-  manufacturing_date: 'Manufacturing Date',
-  expiry_date: 'Expiry Date',
-  quantity_affected: 'Quantity Affected',
-  complaint_type: 'Complaint Type',
-  complaint_date: 'Complaint Date',
-  detailed_complaint_description: 'Detailed Description',
-  initial_severity: 'Initial Severity',
-  priority: 'Priority',
-};
-
-const PromptInput = () => {
+const PromptInput = ({ inputRef }) => {
   const dispatch = useDispatch();
   const text = useSelector((state) => state.copilot.draftText);
   const currentComplaint = useSelector((state) => state.complaint.complaint);
@@ -112,6 +97,7 @@ const PromptInput = () => {
   return (
     <div className="prompt-input-area">
       <textarea
+        ref={inputRef}
         rows="2"
         placeholder="Ask about this complaint, or paste details to extract..."
         value={text}

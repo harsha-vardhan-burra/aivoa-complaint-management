@@ -1,5 +1,6 @@
 
 import { useSelector } from 'react-redux';
+import { FIELD_LABELS } from '../../constants/fieldLabels';
 
 // Matches the backend's severity enum (low/medium/high/critical) so the
 // gauge always reflects a real value the AI can return, rather than a
@@ -67,7 +68,7 @@ const RiskAssessment = () => {
 
       {missing && missing.length > 0 && (
         <div className="missing-info-box">
-          <strong>Missing Critical Info:</strong> {missing.join(', ')}
+          <strong>Missing Critical Info:</strong> {missing.map((f) => FIELD_LABELS[f] || f).join(', ')}
         </div>
       )}
     </div>

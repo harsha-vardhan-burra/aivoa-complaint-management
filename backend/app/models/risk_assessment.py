@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Column, String, Text, DateTime, ForeignKey, JSON, Float, Uuid
 from sqlalchemy.orm import relationship
@@ -28,6 +28,9 @@ class RiskAssessment(Base):
     confidence = Column(Float, nullable=True)
     recommended_action = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    # Use timezone-aware UTC datetime callable rather than deprecated datetime.utcnow
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
 
     complaint = relationship("Complaint", back_populates="risk_assessments")

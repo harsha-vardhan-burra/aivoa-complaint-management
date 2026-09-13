@@ -140,6 +140,7 @@ class TestComplaintPersistence(unittest.TestCase):
         self.assertIsNone(data["manufacturing_date"])
         self.assertIsNone(data["expiry_date"])
         self.assertIsNone(data["quantity_affected"])
+        self.assertIsNone(data["quantity_unit"])
         self.assertIsNone(data["initial_severity"])
         self.assertIsNone(data["priority"])
 
@@ -199,7 +200,7 @@ class TestComplaintPersistence(unittest.TestCase):
         self.assertEqual(merged.quantity_affected, Decimal("100"))
 
     def test_deterministic_missing_fields_all_present(self):
-        """A & B. Verify missing_fields is [] when all 13 ComplaintBase fields are non-null."""
+        """A & B. Verify missing_fields is [] when all 14 ComplaintBase fields are non-null."""
         from datetime import date
         all_fields = ComplaintBase(
             complaint_source="Email",
@@ -210,6 +211,7 @@ class TestComplaintPersistence(unittest.TestCase):
             manufacturing_date=date(2025, 1, 1),
             expiry_date=date(2027, 1, 1),
             quantity_affected=Decimal("50"),
+            quantity_unit="Units",
             complaint_type="Packaging",
             complaint_date=date(2026, 2, 1),
             detailed_complaint_description="Damaged box.",
@@ -232,6 +234,7 @@ class TestComplaintPersistence(unittest.TestCase):
             manufacturing_date=date(2025, 1, 1),
             expiry_date=date(2027, 1, 1),
             quantity_affected=Decimal("50"),
+            quantity_unit="Units",
             complaint_type="Packaging",
             complaint_date=date(2026, 2, 1),
             detailed_complaint_description="Damaged box.",
@@ -744,6 +747,90 @@ class TestComplaintPersistence(unittest.TestCase):
         self.assertEqual(result["risk"].severity, "medium")
         self.assertNotIn("customer_name", result["missing_fields"])
         self.assertIn("manufacturing_date", result["missing_fields"])
+
+    def test_quantity_unit_persistence(self):
+        """Verify quantity_unit is persisted to the database and returned in API response."""
+        payload = {
+            "complaint": {
+                "product_name": "Metformin Hydrochloride API",
+                "batch_number": "CHG260712A",
+                "quantity_affected": 50,
+                "quantity_unit": "kg",
+            },
+            "risk_assessment": None,
+        }
+
+        response = self.client.post("/api/complaints", json=payload)
+        self.assertEqual(response.status_code, 201)
+        data = response.json()
+        self.assertEqual(data["quantity_unit"], "kg")
+        self.assertEqual(float(data["quantity_affected"]), 50)
+
+        # Verify DB directly
+        db = TestingSessionLocal()
+        try:
+            db_obj = db.query(Complaint).filter_by(id=uuid.UUID(data["id"])).first()
+            self.assertIsNotNone(db_obj)
+            self.assertEqual(db_obj.quantity_unit, "kg")
+            self.assertEqual(float(db_obj.quantity_affected), 50)
+        finally:
+            db.close()
+
+    def test_quantity_unit_merge_patch_non_destructive(self):
+        """Verify conversational merge patch does not erase existing quantity_unit when updating quantity_affected."""
+        from app.agents.nodes import merge_patch
+
+        current = ComplaintBase(
+            product_name="Metformin Hydrochloride API",
+            quantity_affected=Decimal("50"),
+            quantity_unit="kg",
+        )
+        patch = ComplaintBase(quantity_affected=Decimal("60"))
+
+        state = {"current_complaint": current, "extracted_patch": patch}
+        result = merge_patch(state)
+
+        merged = result["merged_complaint"]
+        self.assertEqual(merged.quantity_affected, Decimal("60"))
+        self.assertEqual(merged.quantity_unit, "kg")
+        self.assertEqual(result["changed_fields"], ["quantity_affected"])
+
+    def test_quantity_unit_patch_update(self):
+        """Verify quantity_unit update records in changed_fields and updates merged complaint."""
+        from app.agents.nodes import merge_patch
+
+        current = ComplaintBase(
+            product_name="Metformin Hydrochloride API",
+            quantity_affected=Decimal("50"),
+            quantity_unit="kg",
+        )
+        patch = ComplaintBase(quantity_unit="mg")
+
+        state = {"current_complaint": current, "extracted_patch": patch}
+        result = merge_patch(state)
+
+        merged = result["merged_complaint"]
+        self.assertEqual(merged.quantity_unit, "mg")
+        self.assertEqual(merged.quantity_affected, Decimal("50"))
+        self.assertEqual(result["changed_fields"], ["quantity_unit"])
+
+    def test_groq_service_timeout_handling(self):
+        """Verify GroqService respects timeout configuration and maps timeout exceptions to GroqServiceError."""
+        from unittest.mock import MagicMock
+        from app.services.groq_service import GroqService, GroqServiceError, DEFAULT_GROQ_TIMEOUT_SECONDS
+
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.side_effect = TimeoutError("Request timed out")
+
+        service = GroqService(client=mock_client, timeout=DEFAULT_GROQ_TIMEOUT_SECONDS)
+        self.assertEqual(service._timeout, DEFAULT_GROQ_TIMEOUT_SECONDS)
+
+        with self.assertRaises(GroqServiceError) as ctx:
+            service.extract_fields("Test complaint message")
+
+        self.assertIn("Groq API call failed", str(ctx.exception))
+        _, kwargs = mock_client.chat.completions.create.call_args
+        self.assertEqual(kwargs.get("timeout"), DEFAULT_GROQ_TIMEOUT_SECONDS)
 
 
 if __name__ == "__main__":

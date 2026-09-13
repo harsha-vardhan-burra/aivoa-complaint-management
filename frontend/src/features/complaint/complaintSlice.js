@@ -27,6 +27,7 @@ const initialState = {
     manufacturing_date: null,
     expiry_date: null,
     quantity_affected: null,
+    quantity_unit: null,
     complaint_type: null,
     complaint_date: null,
     detailed_complaint_description: null,

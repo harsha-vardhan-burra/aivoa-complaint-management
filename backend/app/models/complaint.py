@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 from sqlalchemy import Column, String, Date, Numeric, DateTime, Text, Uuid
 from sqlalchemy.orm import relationship
@@ -28,6 +28,7 @@ class Complaint(Base):
     manufacturing_date = Column(Date, nullable=True)
     expiry_date = Column(Date, nullable=True)
     quantity_affected = Column(Numeric, nullable=True)
+    quantity_unit = Column(String, nullable=True)
 
     complaint_type = Column(String, nullable=True)
     complaint_date = Column(Date, nullable=True)
@@ -36,9 +37,15 @@ class Complaint(Base):
     initial_severity = Column(String, nullable=True)
     priority = Column(String, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    # Use timezone-aware UTC datetime callable rather than deprecated datetime.utcnow
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
     updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
     )
 
     risk_assessments = relationship(

@@ -13,6 +13,9 @@ from app.services.prompts import (
 )
 from app.services.schema_utils import COMPLAINT_EXTRACTION_SCHEMA, RISK_ASSESSMENT_SCHEMA
 
+# Explicit timeout in seconds for Groq API calls to avoid indefinite hangs
+DEFAULT_GROQ_TIMEOUT_SECONDS = 45.0
+
 
 class GroqServiceError(Exception):
     """Raised when the Groq API call itself fails: network error, auth
@@ -46,8 +49,17 @@ class GroqService:
     - Persisting anything (Phase 3 models + later API layer).
     """
 
-    def __init__(self, client: Optional[Groq] = None, model: Optional[str] = None):
-        self._client = client or Groq(api_key=settings.GROQ_API_KEY)
+    def __init__(
+        self,
+        client: Optional[Groq] = None,
+        model: Optional[str] = None,
+        timeout: float = DEFAULT_GROQ_TIMEOUT_SECONDS,
+    ):
+        self._timeout = timeout
+        self._client = client or Groq(
+            api_key=settings.GROQ_API_KEY,
+            timeout=self._timeout,
+        )
         self._model = model or settings.GROQ_MODEL
 
     def _chat_json(self, messages: list[dict], schema: dict) -> dict:
@@ -57,6 +69,7 @@ class GroqService:
                 messages=messages,
                 response_format={"type": "json_schema", "json_schema": schema},
                 temperature=0,
+                timeout=self._timeout,
             )
         except Exception as exc:
             raise GroqServiceError(f"Groq API call failed: {exc}") from exc

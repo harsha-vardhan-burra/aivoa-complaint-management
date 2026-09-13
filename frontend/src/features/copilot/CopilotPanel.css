@@ -1,2 +1,27 @@
 
 /* Copilot specific overrides if needed */
+.upload-zone.drag-over {
+  border-color: var(--brand);
+  background-color: var(--brand-tint);
+}
+
+.document-chip {
+  background-color: var(--brand-tint);
+  border: 1px solid rgba(15, 110, 94, 0.3);
+}
+
+.document-chip-name {
+  font-weight: 500;
+}
+
+.document-chip-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.document-chip-process-btn {
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  border-radius: 4px;
+}

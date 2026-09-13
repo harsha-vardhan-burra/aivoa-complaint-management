@@ -23,26 +23,11 @@ import {
   CloseIcon,
   AssistantMarkIcon,
 } from "../../components/icons";
+import { FIELD_LABELS } from "../../constants/fieldLabels";
 import "./CopilotPanel.css";
 
 const EXAMPLE_TEXT =
   "Apollo Pharmacy reported discolored capsules in Amoxicillin Capsules 500 mg.";
-
-const FIELD_LABELS = {
-  complaint_source: "Complaint Source",
-  customer_name: "Customer Name",
-  product_name: "Product Name",
-  product_strength_grade: "Product Strength/Grade",
-  batch_number: "Batch/Lot Number",
-  manufacturing_date: "Manufacturing Date",
-  expiry_date: "Expiry Date",
-  quantity_affected: "Quantity Affected",
-  complaint_type: "Complaint Type",
-  complaint_date: "Complaint Date",
-  detailed_complaint_description: "Detailed Description",
-  initial_severity: "Initial Severity",
-  priority: "Priority",
-};
 
 const CopilotPanel = () => {
   const messages = useSelector((state) => state.copilot.messages);
@@ -55,13 +40,20 @@ const CopilotPanel = () => {
 
   const dispatch = useDispatch();
   const fileInputRef = useRef(null);
+  const promptInputRef = useRef(null);
 
   // Raw File object is kept outside Redux to prevent non-serializable warnings
   const [selectedFile, setSelectedFile] = useState(null);
   const [isProcessingDoc, setIsProcessingDoc] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const handleBrowseClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const handlePasteClick = (event) => {
+    event.stopPropagation();
+    promptInputRef.current?.focus();
   };
 
   const handleZoneKeyDown = (event) => {
@@ -71,12 +63,34 @@ const CopilotPanel = () => {
     }
   };
 
-  const handleFileChange = (event) => {
-    const file = event.target.files && event.target.files[0];
+  // Shared helper so browse and drag-and-drop follow identical state path
+  const applySelectedFile = (file) => {
     if (!file) return;
     setSelectedFile(file);
     dispatch(setUploadedDocument({ name: file.name, size: file.size }));
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files && event.target.files[0];
+    applySelectedFile(file);
     event.target.value = "";
+  };
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (event) => {
+    event.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (event) => {
+    event.preventDefault();
+    setIsDragOver(false);
+    const file = event.dataTransfer.files && event.dataTransfer.files[0];
+    applySelectedFile(file);
   };
 
   const handleRemoveDocument = () => {
@@ -183,11 +197,14 @@ const CopilotPanel = () => {
       {/* Scrollable Content Area */}
       <div className="chat-history">
         <div
-          className="upload-zone"
+          className={`upload-zone${isDragOver ? " drag-over" : ""}`}
           role="button"
           tabIndex={0}
           onClick={handleBrowseClick}
           onKeyDown={handleZoneKeyDown}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
           aria-label="Upload complaint document"
         >
           <TrayUploadIcon className="upload-icon" aria-hidden="true" />
@@ -203,7 +220,7 @@ const CopilotPanel = () => {
           <button
             type="button"
             className="btn-paste"
-            onClick={(event) => event.stopPropagation()}
+            onClick={handlePasteClick}
           >
             <DocumentIcon className="btn-icon" />
             Paste Complaint Text / Email
@@ -225,38 +242,17 @@ const CopilotPanel = () => {
         </div>
 
         {uploadedDocument && (
-          <div className="document-chip" style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '8px',
-            padding: '8px 12px',
-            marginBottom: '12px',
-            backgroundColor: 'rgba(15, 110, 94, 0.1)',
-            border: '1px solid rgba(15, 110, 94, 0.3)',
-            borderRadius: '6px'
-          }}>
-            <span className="document-chip-name" style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontSize: '0.875rem',
-              fontWeight: 500
-            }}>
+          <div className="document-chip">
+            <span className="document-chip-name">
               <DocumentIcon className="document-chip-icon" />
               {uploadedDocument.name} ({(uploadedDocument.size / 1024).toFixed(1)} KB)
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="document-chip-actions">
               <button
                 type="button"
-                className="btn-primary"
+                className="btn-primary document-chip-process-btn"
                 onClick={handleProcessDocument}
                 disabled={isProcessingDoc || loading}
-                style={{
-                  padding: '4px 10px',
-                  fontSize: '0.75rem',
-                  borderRadius: '4px'
-                }}
               >
                 {isProcessingDoc ? 'Extracting...' : 'Process Document'}
               </button>
@@ -301,7 +297,7 @@ const CopilotPanel = () => {
 
       {/* Fixed Bottom Input */}
       <div className="copilot-actions">
-        <PromptInput />
+        <PromptInput inputRef={promptInputRef} />
         <div className="disclaimer">
           AI responses may contain errors. Please verify information.
         </div>
