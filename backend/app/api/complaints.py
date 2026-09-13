@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.models.complaint import Complaint
 from app.models.risk_assessment import RiskAssessment
+from app.models.ai_insight import ComplaintAIInsight
 from app.schemas.complaint import SaveComplaintRequest, ComplaintResponse
 
 router = APIRouter()
@@ -85,9 +86,39 @@ def create_complaint(
                 rationale=risk_data.rationale,
                 missing_fields=risk_data.missing_fields,
                 confidence=risk_data.confidence,
+                confidence_factors=risk_data.confidence_factors or [],
                 recommended_action=risk_data.recommended_action,
             )
             db.add(db_risk)
+
+        # Persist decision-support AI insights if present
+        if payload.summary:
+            db_summary = ComplaintAIInsight(
+                complaint_id=db_complaint.id,
+                insight_type="summary",
+                payload=payload.summary.model_dump(mode="json"),
+            )
+            db.add(db_summary)
+
+        if payload.root_cause:
+            db_rc = ComplaintAIInsight(
+                complaint_id=db_complaint.id,
+                insight_type="root_cause",
+                payload=payload.root_cause.model_dump(mode="json")
+                if hasattr(payload.root_cause, "model_dump")
+                else payload.root_cause,
+            )
+            db.add(db_rc)
+
+        if payload.capa:
+            db_capa = ComplaintAIInsight(
+                complaint_id=db_complaint.id,
+                insight_type="capa",
+                payload=payload.capa.model_dump(mode="json")
+                if hasattr(payload.capa, "model_dump")
+                else payload.capa,
+            )
+            db.add(db_capa)
 
         db.commit()
         db.refresh(db_complaint)

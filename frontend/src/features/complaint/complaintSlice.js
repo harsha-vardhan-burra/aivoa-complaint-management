@@ -39,10 +39,17 @@ const initialState = {
     rationale: null,
     missing_fields: [],
     confidence: null,
+    confidence_factors: [],
     recommended_action: null,
   },
   missingFields: [],
   lastChangedFields: [],
+  completeness: {
+    score: 0,
+    missing_critical: [],
+    missing_optional: [],
+    ready_to_submit: false,
+  },
 };
 
 const complaintSlice = createSlice({
@@ -59,10 +66,22 @@ const complaintSlice = createSlice({
     setRiskAssessment: (state, action) => {
       state.riskAssessment = action.payload;
     },
-    // missing_fields comes from deterministic calculation
+    // missing_fields comes from deterministic calculation, optionally with completeness
     setMissingFields: (state, action) => {
-      state.missingFields = action.payload;
-      state.triageStatus = action.payload.length === 0 ? "Ready to Commit" : "Pending Triage";
+      if (Array.isArray(action.payload)) {
+        state.missingFields = action.payload;
+        state.triageStatus = action.payload.length === 0 ? "Ready to Commit" : "Pending Triage";
+      } else if (action.payload && typeof action.payload === 'object') {
+        const missing = action.payload.missingFields || action.payload.missing_fields || [];
+        state.missingFields = missing;
+        state.triageStatus = missing.length === 0 ? "Ready to Commit" : "Pending Triage";
+        if (action.payload.completeness !== undefined) {
+          state.completeness = action.payload.completeness;
+        }
+      }
+    },
+    setCompleteness: (state, action) => {
+      state.completeness = action.payload;
     },
     setLastChangedFields: (state, action) => {
       state.lastChangedFields = action.payload || [];
@@ -73,5 +92,5 @@ const complaintSlice = createSlice({
   }
 });
 
-export const { setComplaint, setRiskAssessment, setMissingFields, setLastChangedFields, resetComplaint } = complaintSlice.actions;
+export const { setComplaint, setRiskAssessment, setMissingFields, setCompleteness, setLastChangedFields, resetComplaint } = complaintSlice.actions;
 export default complaintSlice.reducer;

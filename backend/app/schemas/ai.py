@@ -21,15 +21,27 @@ class ProcessComplaintRequest(BaseModel):
     current_risk: Optional[RiskAssessmentBase] = None
 
 
+class CompletenessResult(BaseModel):
+    """Deterministic score and missing field breakdown for complaint intake."""
+
+    score: int
+    missing_critical: List[str] = []
+    missing_optional: List[str] = []
+    ready_to_submit: bool = False
+
+
 class ProcessComplaintResponse(BaseModel):
     """Response body for POST /api/ai/complaints/process.
 
     complaint, risk, missing_fields, and changed_fields are returned
     as top-level fields for frontend synchronization and UI feedback.
+    completeness provides a weighted score and breakdown of critical
+    vs. optional missing fields.
     """
 
     complaint: ComplaintBase
     risk: Optional[RiskAssessmentBase] = None
     missing_fields: List[str] = []
     changed_fields: List[str] = []
+    completeness: Optional[CompletenessResult] = None
 

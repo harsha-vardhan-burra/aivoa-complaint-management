@@ -27,11 +27,49 @@ export const processComplaintMessage = async (message, currentComplaint, current
 }
 
 // Phase 6.5: persists the current structured complaint state and optional
-// AI risk assessment to PostgreSQL backend via POST /api/complaints.
-export const saveComplaint = async (complaint, riskAssessment) => {
-  const response = await apiClient.post('/api/complaints', {
+// AI risk assessment and decision-support insights via POST /api/complaints.
+export const saveComplaint = async (complaint, riskAssessment, insights = {}) => {
+  const payload = {
     complaint,
     risk_assessment: riskAssessment,
+    ...insights,
+  }
+  const response = await apiClient.post('/api/complaints', payload)
+  return response.data
+}
+
+// Feature 2: on-demand plain-language summary and key facts.
+export const generateComplaintSummary = async (complaint) => {
+  const response = await apiClient.post('/api/ai/complaints/summary', {
+    complaint,
+  })
+  return response.data
+}
+
+// Feature 3: deterministic candidate duplicate check.
+export const checkDuplicateComplaints = async (complaint, windowDays = 90) => {
+  const response = await apiClient.post('/api/ai/complaints/duplicates', {
+    complaint,
+    window_days: windowDays,
+  })
+  return response.data
+}
+
+// Feature 4: AI root cause recommendation
+export const suggestRootCause = async (complaint, risk) => {
+  const response = await apiClient.post('/api/ai/complaints/root-cause', {
+    complaint,
+    risk,
+  })
+  return response.data
+}
+
+// Feature 5: AI CAPA proposal
+export const suggestCapa = async (complaint, risk, rootCause = null) => {
+  const response = await apiClient.post('/api/ai/complaints/capa', {
+    complaint,
+    risk,
+    root_cause: rootCause,
   })
   return response.data
 }

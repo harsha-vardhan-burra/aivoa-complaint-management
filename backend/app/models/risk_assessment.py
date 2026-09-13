@@ -26,6 +26,7 @@ class RiskAssessment(Base):
     rationale = Column(Text, nullable=True)
     missing_fields = Column(JSON, nullable=True, default=list)
     confidence = Column(Float, nullable=True)
+    confidence_factors = Column(JSON, nullable=True, default=list)
     recommended_action = Column(Text, nullable=True)
 
     # Use timezone-aware UTC datetime callable rather than deprecated datetime.utcnow

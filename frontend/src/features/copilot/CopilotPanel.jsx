@@ -133,7 +133,12 @@ const CopilotPanel = () => {
       if (result.risk) {
         dispatch(setRiskAssessment(result.risk));
       }
-      dispatch(setMissingFields(result.missing_fields));
+      dispatch(
+        setMissingFields({
+          missingFields: result.missing_fields,
+          completeness: result.completeness,
+        })
+      );
 
       const changedFields = result.changed_fields || [];
       dispatch(setLastChangedFields(changedFields));

@@ -116,6 +116,7 @@ RISK_ASSESSMENT_SCHEMA = {
             "rationale",
             "missing_fields",
             "confidence",
+            "confidence_factors",
             "recommended_action",
         ],
         "properties": {
@@ -135,7 +136,111 @@ RISK_ASSESSMENT_SCHEMA = {
                 "type": ["number", "null"],
                 "description": "A value between 0 and 1.",
             },
+            "confidence_factors": {
+                "type": "array",
+                "maxItems": 4,
+                "items": {"type": "string"},
+                "description": (
+                    "Up to 4 concise bullet phrases explaining why confidence is "
+                    "high or low (e.g. 'Batch number confirmed', 'Missing detailed description')."
+                ),
+            },
             "recommended_action": {"type": ["string", "null"]},
+        },
+    },
+}
+
+COMPLAINT_SUMMARY_SCHEMA = {
+    "name": "complaint_summary",
+    "strict": True,
+    "schema": {
+        "type": "object",
+        "additionalProperties": False,
+        "required": [
+            "summary",
+            "key_facts",
+        ],
+        "properties": {
+            "summary": {
+                "type": "string",
+                "description": "A 1-2 sentence plain language summary of the complaint.",
+            },
+            "key_facts": {
+                "type": "array",
+                "maxItems": 5,
+                "items": {"type": "string"},
+                "description": "Up to 5 short bullet fragments highlighting key facts (e.g. 'Batch CHG260712A').",
+            },
+        },
+    },
+}
+
+ROOT_CAUSE_SCHEMA = {
+    "name": "root_cause_suggestion",
+    "strict": True,
+    "schema": {
+        "type": "object",
+        "additionalProperties": False,
+        "required": [
+            "hypothesis",
+            "contributing_factors",
+            "confidence",
+            "recommended_investigation_steps",
+        ],
+        "properties": {
+            "hypothesis": {
+                "type": "string",
+                "description": "Starting hypothesis for a human investigator.",
+            },
+            "contributing_factors": {
+                "type": "array",
+                "maxItems": 5,
+                "items": {"type": "string"},
+                "description": "Up to 5 contributing factors.",
+            },
+            "confidence": {
+                "type": "string",
+                "enum": ["low", "medium", "high"],
+                "description": "Confidence level in this hypothesis.",
+            },
+            "recommended_investigation_steps": {
+                "type": "array",
+                "maxItems": 5,
+                "items": {"type": "string"},
+                "description": "Up to 5 investigation steps for human QA.",
+            },
+        },
+    },
+}
+
+CAPA_SUGGESTION_SCHEMA = {
+    "name": "capa_suggestion",
+    "strict": True,
+    "schema": {
+        "type": "object",
+        "additionalProperties": False,
+        "required": [
+            "corrective_actions",
+            "preventive_actions",
+            "rationale",
+        ],
+        "properties": {
+            "corrective_actions": {
+                "type": "array",
+                "maxItems": 5,
+                "items": {"type": "string"},
+                "description": "Up to 5 immediate corrective actions.",
+            },
+            "preventive_actions": {
+                "type": "array",
+                "maxItems": 5,
+                "items": {"type": "string"},
+                "description": "Up to 5 preventive actions to prevent recurrence.",
+            },
+            "rationale": {
+                "type": "string",
+                "description": "Technical rationale justifying these CAPA actions.",
+            },
         },
     },
 }

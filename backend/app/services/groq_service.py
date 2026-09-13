@@ -4,14 +4,28 @@ from typing import Optional
 from groq import Groq
 
 from app.core.config import settings
+from app.schemas.ai_insights import (
+    ComplaintSummary,
+    RootCauseSuggestion,
+    CapaSuggestion,
+)
 from app.schemas.complaint import ComplaintBase
 from app.schemas.risk_assessment import RiskAssessmentBase
 from app.services.prompts import (
     build_document_extraction_messages,
     build_extraction_messages,
     build_risk_messages,
+    build_root_cause_messages,
+    build_summary_messages,
+    build_capa_messages,
 )
-from app.services.schema_utils import COMPLAINT_EXTRACTION_SCHEMA, RISK_ASSESSMENT_SCHEMA
+from app.services.schema_utils import (
+    COMPLAINT_EXTRACTION_SCHEMA,
+    COMPLAINT_SUMMARY_SCHEMA,
+    RISK_ASSESSMENT_SCHEMA,
+    ROOT_CAUSE_SCHEMA,
+    CAPA_SUGGESTION_SCHEMA,
+)
 
 # Explicit timeout in seconds for Groq API calls to avoid indefinite hangs
 DEFAULT_GROQ_TIMEOUT_SECONDS = 45.0
@@ -125,5 +139,57 @@ class GroqService:
         except Exception as exc:
             raise GroqValidationError(
                 f"Risk assessment output failed schema validation: {exc}"
+            ) from exc
+
+    def summarize_complaint(self, complaint: ComplaintBase) -> ComplaintSummary:
+        """Produce an executive 1-2 sentence summary and key facts from complaint data.
+        Decision support only, never merged into complaint facts."""
+        raw = self._chat_json(
+            build_summary_messages(complaint), COMPLAINT_SUMMARY_SCHEMA
+        )
+
+        try:
+            return ComplaintSummary.model_validate(raw)
+        except Exception as exc:
+            raise GroqValidationError(
+                f"Complaint summary output failed schema validation: {exc}"
+            ) from exc
+
+    def suggest_root_cause(
+        self,
+        complaint: ComplaintBase,
+        risk: Optional[RiskAssessmentBase] = None,
+    ) -> RootCauseSuggestion:
+        """Propose an initial starting root-cause hypothesis and investigation steps.
+        Decision support only, never merged into complaint facts."""
+        raw = self._chat_json(
+            build_root_cause_messages(complaint, risk), ROOT_CAUSE_SCHEMA
+        )
+
+        try:
+            return RootCauseSuggestion.model_validate(raw)
+        except Exception as exc:
+            raise GroqValidationError(
+                f"Root cause output failed schema validation: {exc}"
+            ) from exc
+
+    def suggest_capa(
+        self,
+        complaint: ComplaintBase,
+        risk: RiskAssessmentBase,
+        root_cause: Optional[RootCauseSuggestion] = None,
+    ) -> CapaSuggestion:
+        """Propose draft corrective and preventive action suggestions for high/critical complaints.
+        Decision support only, never merged into complaint facts."""
+        raw = self._chat_json(
+            build_capa_messages(complaint, risk, root_cause),
+            CAPA_SUGGESTION_SCHEMA,
+        )
+
+        try:
+            return CapaSuggestion.model_validate(raw)
+        except Exception as exc:
+            raise GroqValidationError(
+                f"CAPA suggestion output failed schema validation: {exc}"
             ) from exc
 

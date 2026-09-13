@@ -53,4 +53,9 @@ class Complaint(Base):
         back_populates="complaint",
         cascade="all, delete-orphan",
     )
+    ai_insights = relationship(
+        "ComplaintAIInsight",
+        back_populates="complaint",
+        cascade="all, delete-orphan",
+    )
 

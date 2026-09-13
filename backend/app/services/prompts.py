@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 from app.schemas.complaint import ComplaintBase
 from app.schemas.risk_assessment import RiskAssessmentBase
@@ -67,6 +68,9 @@ Never invent or list external field names outside this explicit list.
 - "confidence" is a number between 0 and 1 representing how confident \
 you are in this assessment given the available facts -- lower it when \
 important fields are missing or the message is ambiguous.
+- "confidence_factors" is a list of up to 4 concise bullet phrases (strings) explaining \
+why confidence is high or low (e.g. "Batch number and expiry confirmed", "Exact defect description provided", \
+"Missing quantity affected", "Ambiguous reported impact").
 - "recommended_action" is one short, concrete next step for the quality \
 team (e.g. "Route to QA investigation"). It is decision support, not a \
 complaint fact, and must never introduce new information about the \
@@ -132,6 +136,132 @@ def build_risk_messages(complaint: ComplaintBase) -> list[dict]:
     )
     return [
         {"role": "system", "content": RISK_SYSTEM_PROMPT},
+        {"role": "user", "content": user_content},
+    ]
+
+
+SUMMARY_SYSTEM_PROMPT = """You are an executive QA reviewer in a pharmaceutical quality assurance department. \
+Your task is to generate a concise, objective summary of the customer complaint details provided.
+
+Rules you must follow:
+- "summary" must be 1-2 plain language sentences summarizing what happened, the product involved, and key reported facts.
+- "key_facts" is an array of up to 5 short bullet fragments highlighting key facts (e.g. "Batch CHG260712A", "Quantity: 50 bottles", "Defect: Discolored capsules").
+- Base your summary strictly on the provided complaint details. Never invent or infer details not present in the input.
+- Output JSON only adhering to the specified schema.
+"""
+
+
+def build_summary_messages(complaint: ComplaintBase) -> list[dict]:
+    """Build the chat messages for an executive complaint summary call.
+
+    Unlike risk assessment, summary benefits from customer_name and
+    complaint_source for full administrative context, so no fields are
+    excluded to prevent bias.
+    """
+    complaint_json = complaint.model_dump(mode="json")
+    non_null_facts = {k: v for k, v in complaint_json.items() if v is not None}
+    user_content = (
+        "Complaint facts:\n"
+        f"{json.dumps(non_null_facts, indent=2)}"
+    )
+    return [
+        {"role": "system", "content": SUMMARY_SYSTEM_PROMPT},
+        {"role": "user", "content": user_content},
+    ]
+
+
+ROOT_CAUSE_SYSTEM_PROMPT = """You are an expert pharmaceutical quality investigator assistant. \
+Your role is to propose an initial starting hypothesis and investigation steps for a human quality investigator.
+
+Rules you must follow:
+- You are proposing a starting hypothesis for a human investigator, not delivering a finding.
+- If the available facts are insufficient to suggest anything specific, say so plainly rather than guessing.
+- Base your hypothesis solely on the technical complaint facts and risk context provided.
+- "hypothesis": a clear starting hypothesis about potential root causes (e.g. equipment wear, contamination, packaging seal heat deviation, storage temperature excursion).
+- "contributing_factors": up to 5 potential contributing factors that could have caused or enabled the issue.
+- "confidence": must be one of "low", "medium", or "high".
+- "recommended_investigation_steps": up to 5 concrete steps for the human investigator to verify or refute this hypothesis (e.g. review batch record, test retain samples).
+- Output JSON only adhering to the specified schema.
+"""
+
+
+def build_root_cause_messages(
+    complaint: ComplaintBase,
+    risk: Optional[RiskAssessmentBase] = None,
+) -> list[dict]:
+    """Build chat messages for root cause suggestion.
+
+    Drops customer_name and complaint_source to prevent token bias,
+    matching build_risk_messages.
+    """
+    complaint_json = complaint.model_dump(mode="json")
+    facts = {
+        k: v for k, v in complaint_json.items()
+        if k not in ("customer_name", "complaint_source") and v is not None
+    }
+    risk_info = risk.model_dump(mode="json") if risk else None
+
+    context = {
+        "technical_complaint_facts": facts,
+        "risk_context": risk_info,
+    }
+    user_content = (
+        "Complaint and risk data for root-cause hypothesis:\n"
+        f"{json.dumps(context, indent=2)}"
+    )
+    return [
+        {"role": "system", "content": ROOT_CAUSE_SYSTEM_PROMPT},
+        {"role": "user", "content": user_content},
+    ]
+
+
+CAPA_SYSTEM_PROMPT = """You are an expert pharmaceutical quality assurance specialist assisting in drafting CAPA (Corrective and Preventive Action) proposals. \
+Your output is a draft suggestion only, for human QA review and sign-off, never an approved CAPA record.
+
+Rules you must follow:
+- Base suggestions strictly on the technical complaint facts, severity level, and optional root-cause hypothesis.
+- If a root-cause hypothesis is provided, align preventive actions with it.
+- If no root-cause hypothesis is provided, suggest CAPAs based solely on the complaint facts and risk, and do NOT invent an unstated root cause.
+- "corrective_actions": up to 5 immediate actions to contain, correct, or quarantine the issue.
+- "preventive_actions": up to 5 systemic actions to prevent recurrence.
+- "rationale": concise technical justification for these proposed actions.
+- Output JSON only adhering to the specified schema.
+"""
+
+
+def build_capa_messages(
+    complaint: ComplaintBase,
+    risk: RiskAssessmentBase,
+    root_cause: Optional[object] = None,
+) -> list[dict]:
+    """Build chat messages for CAPA suggestion.
+
+    Passes root_cause hypothesis if present for better grounding;
+    otherwise instructs the model to suggest CAPAs based on complaint + risk alone.
+    """
+    complaint_json = complaint.model_dump(mode="json")
+    facts = {
+        k: v for k, v in complaint_json.items()
+        if k not in ("customer_name", "complaint_source") and v is not None
+    }
+    risk_info = risk.model_dump(mode="json") if risk else None
+    rc_info = (
+        root_cause.model_dump(mode="json")
+        if hasattr(root_cause, "model_dump")
+        else root_cause
+    )
+
+    context = {
+        "technical_complaint_facts": facts,
+        "risk_assessment": risk_info,
+        "root_cause_hypothesis": rc_info,
+    }
+    user_content = (
+        "Complaint, risk, and root-cause data for CAPA proposal:\n"
+        f"{json.dumps(context, indent=2)}"
+    )
+    return [
+        {"role": "system", "content": CAPA_SYSTEM_PROMPT},
         {"role": "user", "content": user_content},
     ]
 

@@ -122,6 +122,46 @@ class TestComplaintPersistence(unittest.TestCase):
         finally:
             db.close()
 
+    def test_create_complaint_with_risk_assessment_confidence_factors(self):
+        """Feature 6: Verify confidence factors can be persisted with risk assessment and queried back."""
+        payload = {
+            "complaint": {
+                "product_name": "Ciprofloxacin 500mg",
+                "complaint_type": "Foreign matter",
+                "initial_severity": "Critical",
+            },
+            "risk_assessment": {
+                "severity": "Critical",
+                "rationale": "Foreign particulate in sterile injectable product.",
+                "missing_fields": ["manufacturing_date"],
+                "confidence": 0.95,
+                "confidence_factors": [
+                    "Confirmed particulate defect",
+                    "Critical sterile product route",
+                    "Batch number identified",
+                ],
+                "recommended_action": "Issue immediate field alert and quarantine lot.",
+            },
+        }
+
+        response = self.client.post("/api/complaints", json=payload)
+        self.assertEqual(response.status_code, 201)
+        data = response.json()
+        complaint_id = uuid.UUID(data["id"])
+
+        db = TestingSessionLocal()
+        try:
+            db_risk = db.query(RiskAssessment).filter_by(complaint_id=complaint_id).first()
+            self.assertIsNotNone(db_risk)
+            self.assertEqual(db_risk.severity, "Critical")
+            self.assertEqual(db_risk.confidence, 0.95)
+            self.assertIsNotNone(db_risk.confidence_factors)
+            self.assertEqual(len(db_risk.confidence_factors), 3)
+            self.assertIn("Confirmed particulate defect", db_risk.confidence_factors)
+            self.assertIn("Critical sterile product route", db_risk.confidence_factors)
+        finally:
+            db.close()
+
     def test_unknown_fields_remain_null(self):
         """4. Verify missing/unknown optional complaint fields remain null without fabricated defaults."""
         payload = {
@@ -275,6 +315,34 @@ class TestComplaintPersistence(unittest.TestCase):
         self.assertNotIn("patient_exposure", final_missing)
         self.assertNotIn("product_name", final_missing)  # product_name is non-null, cannot be missing
         self.assertIn("batch_number", final_missing)    # batch_number is null, must be in missing
+
+    def test_assess_risk_passes_confidence_factors(self):
+        """Feature 6: Verify confidence factors from Groq risk assessment pass through the LangGraph node."""
+        from unittest.mock import patch
+        from app.agents.nodes import assess_risk
+        from app.schemas.risk_assessment import RiskAssessmentBase
+
+        complaint = ComplaintBase(
+            product_name="Aspirin 100mg",
+            complaint_type="Broken seal",
+        )
+        state = {"merged_complaint": complaint}
+
+        factors = ["Defect type explicitly specified", "Packaging integrity compromised"]
+        mock_risk = RiskAssessmentBase(
+            severity="medium",
+            rationale="Defective seal poses integrity concern.",
+            missing_fields=[],
+            confidence=0.85,
+            confidence_factors=factors,
+            recommended_action="Inspect lot samples.",
+        )
+
+        with patch("app.agents.nodes._groq_service.assess_risk", return_value=mock_risk):
+            result = assess_risk(state)
+
+        self.assertIsNotNone(result["risk"])
+        self.assertEqual(result["risk"].confidence_factors, factors)
 
     def test_risk_input_sanitization_customer_name_independence(self):
         """Test A: Verify changing customer_name alone produces identical risk-model input messages."""

@@ -146,6 +146,8 @@ def assess_risk(state: ComplaintAgentState) -> dict:
     try:
         risk = _groq_service.assess_risk(merged)
         risk.missing_fields = deterministic_missing
+        if risk.confidence_factors is None:
+            risk.confidence_factors = []
         return {"risk": risk, "missing_fields": deterministic_missing}
     except (GroqServiceError, GroqValidationError) as exc:
         return {

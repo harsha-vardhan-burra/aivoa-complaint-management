@@ -88,6 +88,12 @@ class ComplaintBase(BaseModel):
 
 
 from app.schemas.risk_assessment import RiskAssessmentBase, RiskAssessmentResponse
+from app.schemas.ai_insights import (
+    AIInsightResponse,
+    ComplaintSummary,
+    RootCauseSuggestion,
+    CapaSuggestion,
+)
 
 
 class ComplaintCreate(ComplaintBase):
@@ -98,10 +104,13 @@ class ComplaintCreate(ComplaintBase):
 
 class SaveComplaintRequest(BaseModel):
     """Request payload for POST /api/complaints, containing complaint details
-    and optional AI risk assessment."""
+    and optional AI risk assessment and decision-support insights."""
 
     complaint: ComplaintBase
     risk_assessment: Optional[RiskAssessmentBase] = None
+    summary: Optional[ComplaintSummary] = None
+    root_cause: Optional[RootCauseSuggestion] = None
+    capa: Optional[CapaSuggestion] = None
 
 
 class ComplaintResponse(ComplaintBase):
@@ -113,4 +122,5 @@ class ComplaintResponse(ComplaintBase):
     created_at: datetime
     updated_at: datetime
     risk_assessments: List[RiskAssessmentResponse] = []
+    ai_insights: List[AIInsightResponse] = []
 

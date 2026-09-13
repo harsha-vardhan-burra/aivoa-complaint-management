@@ -419,6 +419,52 @@ body {
   border-bottom: 1px solid var(--line);
 }
 
+/* Feature 1: Completeness Progress Bar */
+.completeness-section {
+  margin-bottom: var(--spacing-md);
+  padding: 0.6rem 0.8rem;
+  background: var(--surface-sunken);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+}
+
+.completeness-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.completeness-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink-600);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.completeness-score {
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--brand);
+}
+
+.completeness-bar-track {
+  width: 100%;
+  height: 6px;
+  background-color: var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.completeness-bar-fill {
+  height: 100%;
+  background-color: var(--brand);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
 /* Signature element: severity presented as a position on the full
    Minor -> Major -> Critical scale, like a lab-report measurement,
    rather than an isolated colored pill. */
@@ -479,6 +525,46 @@ body {
 .risk-badge.risk-critical { background-color: var(--signal-critical-tint); color: var(--signal-critical); }
 .risk-badge.risk-minor { background-color: var(--signal-minor-tint); color: var(--signal-minor); }
 .risk-badge.risk-unassessed { background-color: var(--surface-sunken); color: var(--ink-400); }
+
+.confidence-factors-box {
+  margin-top: -0.25rem;
+  margin-bottom: var(--spacing-md);
+  padding: 0.5rem 0.65rem;
+  background-color: var(--surface);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.confidence-factors-title {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-600);
+  margin-bottom: 0.35rem;
+}
+
+.confidence-factors-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.confidence-factor-tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  background-color: var(--surface-sunken);
+  color: var(--ink-800);
+  padding: 0.18rem 0.45rem;
+  border-radius: 3px;
+  border: 1px solid var(--line);
+  font-family: inherit;
+  line-height: 1.3;
+}
 
 .risk-block { margin-bottom: 1rem; }
 .risk-block:last-of-type { margin-bottom: 0; }

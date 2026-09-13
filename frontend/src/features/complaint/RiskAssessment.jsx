@@ -12,6 +12,7 @@ const capitalize = (value) => (value ? value.charAt(0).toUpperCase() + value.sli
 const RiskAssessment = () => {
   const risk = useSelector((state) => state.complaint.riskAssessment);
   const missing = useSelector((state) => state.complaint.missingFields);
+  const completeness = useSelector((state) => state.complaint.completeness);
 
   // No assessment has run yet (fresh load, or after Reset Form) when
   // severity is null. Previously LEVELS.indexOf(null) === -1 was clamped
@@ -26,9 +27,26 @@ const RiskAssessment = () => {
     risk.severity === 'low' ? 'risk-minor' : '';
   const confidencePct = Math.round((risk.confidence || 0) * 100);
 
+  const missingCritical = completeness?.missing_critical || [];
+  const score = completeness?.score ?? 0;
+
   return (
     <div className="risk-card">
       <h2 className="risk-header">AI Risk Assessment</h2>
+
+      {/* Feature 1: Complaint Completeness Progress Bar */}
+      <div className="completeness-section">
+        <div className="completeness-header">
+          <span className="completeness-label">Completeness</span>
+          <span className="completeness-score">{score}%</span>
+        </div>
+        <div className="completeness-bar-track">
+          <div
+            className="completeness-bar-fill"
+            style={{ width: `${Math.min(100, Math.max(0, score))}%` }}
+          />
+        </div>
+      </div>
 
       {/* Signature element: a lab-report-style severity gauge, not just an
           isolated badge -- shows where this complaint sits on the full
@@ -56,6 +74,20 @@ const RiskAssessment = () => {
         </span>
       </div>
 
+      {/* Feature 6: Confidence Breakdown */}
+      {hasAssessment && risk.confidence_factors && risk.confidence_factors.length > 0 && (
+        <div className="confidence-factors-box">
+          <span className="confidence-factors-title">Confidence Factors</span>
+          <div className="confidence-factors-list">
+            {risk.confidence_factors.map((factor, idx) => (
+              <span key={idx} className="confidence-factor-tag">
+                {factor}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="risk-block">
         <h3 className="risk-block-title">Rationale</h3>
         <p className="risk-block-text">{risk.rationale || 'No assessment has been performed yet.'}</p>
@@ -66,10 +98,16 @@ const RiskAssessment = () => {
         <p className="risk-block-text">{risk.recommended_action || 'Submit a complaint description to generate a recommendation.'}</p>
       </div>
 
-      {missing && missing.length > 0 && (
+      {missingCritical.length > 0 ? (
         <div className="missing-info-box">
-          <strong>Missing Critical Info:</strong> {missing.map((f) => FIELD_LABELS[f] || f).join(', ')}
+          <strong>Missing Critical Info:</strong> {missingCritical.map((f) => FIELD_LABELS[f] || f).join(', ')}
         </div>
+      ) : (
+        missing && missing.length > 0 && (
+          <div className="missing-info-box">
+            <strong>Missing Critical Info:</strong> {missing.map((f) => FIELD_LABELS[f] || f).join(', ')}
+          </div>
+        )
       )}
     </div>
   );

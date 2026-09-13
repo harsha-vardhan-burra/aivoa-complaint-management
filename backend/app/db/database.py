@@ -22,10 +22,18 @@ def get_db():
 def init_db():
     """Create all tables registered on Base.metadata.
 
-    Models must already be imported (directly or transitively) before
-    this is called, otherwise their tables will not be registered.
-    This is intentionally not called automatically on app startup so
-    that a missing/unreachable database does not break the API from
-    booting; run it explicitly (see verification steps).
+    Models are imported here to ensure they are registered on Base.metadata.
+    Also executes safe additive column migrations if running on PostgreSQL.
     """
+    import app.models  # noqa: F401
     Base.metadata.create_all(bind=engine)
+
+    try:
+        if engine.dialect.name == "postgresql":
+            from sqlalchemy import text
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE complaints ADD COLUMN IF NOT EXISTS quantity_unit VARCHAR;"))
+                conn.execute(text("ALTER TABLE risk_assessments ADD COLUMN IF NOT EXISTS confidence_factors JSON;"))
+                conn.commit()
+    except Exception:
+        pass

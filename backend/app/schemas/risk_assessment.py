@@ -19,6 +19,7 @@ class RiskAssessmentBase(BaseModel):
     rationale: Optional[str] = None
     missing_fields: List[str] = []
     confidence: Optional[float] = None
+    confidence_factors: Optional[List[str]] = None
     recommended_action: Optional[str] = None
 
 
